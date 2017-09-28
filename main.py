@@ -2,11 +2,11 @@ import json, time
 
 from flask import Flask, render_template, request
 
+from com.google.gmailauth import gmail_auth, oauth2check
 from com.google.jobmanager import JobManager
 from com.sundaytoz.chart import Chart
-from com.sundaytoz.logger import Logger
 from com.sundaytoz.chartmanager import ChartManager
-from gmailauth import gmail_auth, oauth2check
+from com.sundaytoz.logger import Logger
 
 app = Flask(__name__)
 app.register_blueprint(gmail_auth)

@@ -22,8 +22,9 @@ def oauth2callback():
     credentials = __getFlow().step2_exchange(code)
     email = credentials.id_token[u'email']
     user = Admin().get(email)
-    Logger.debug("code = {code}, user_id={user_id}, email={email}".format(code=code, user_id=user['idx'], email=email))
     if user:
+        Logger.debug(
+            "code = {code}, user_id={user_id}, email={email}".format(code=code, user_id=user['idx'], email=email))
         session['user'] = {'id':user['idx'],'time':time.time()}
         return redirect(url_for('chart'))
     else:
