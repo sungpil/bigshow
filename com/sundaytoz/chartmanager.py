@@ -14,7 +14,7 @@ class Singleton(type):
 class ChartManager(metaclass=Singleton):
     pass
 
-    def get_result(chart_id, from_cache=True):
+    def get_result(self, chart_id, from_cache=True):
         status_key = "last_job:{chart_id}".format(chart_id=chart_id)
         last_job_id = Cache().get(status_key)
         Logger.debug("get_result: status_key={status_key}, last_job_id={last_job_id}".format(status_key=status_key, last_job_id=last_job_id))
