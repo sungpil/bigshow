@@ -1,0 +1,214 @@
+{% extends "layout.html" %}
+{% block body %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/card.css') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='css/chartbuilder.css') }}">
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<div class="row" id="row1">
+    <div class="col-5 card-wrapper">
+        <div class="card">
+            <div class="card-body">
+                <div class="card-title flex-justify">
+                    <h4>Chart Builder</h4>
+                    <small>
+                        <button type="button" class="btn btn-light" id="btn-load">load</button>
+                        <select class="custom-select" id="select-chart">
+                            <option value="">차트를 선택</option>
+                            {% for chart in charts %}
+                            <option value="{{ chart['id'] }}">{{ chart['title'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </small>
+                </div>
+                <form id="chart-data">
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">Title</label>
+                        <div class="col-sm-11">
+                            <input type="text" class="form-control" placeholder="Title" name="title">
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">Type</label>
+                        <div class="col-sm-11">
+                            <select class="form-control" name="type">
+                                <option selected value="line">line</option>
+                                <option value="bar">bar</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">Header</label>
+                        <div class="col-sm-11">
+                            <input type="text" class="form-control" placeholder="Header" name="header">
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">Option</label>
+                        <div class="col-sm-11">
+                            <input type="text" class="form-control" placeholder="Options" name="options">
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">Width</label>
+                        <div class="col-sm-11">
+                            <select class="form-control" name="width">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option selected value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">query</label>
+                        <div class="col-sm-11">
+                            <textarea class="form-control" rows="20" name="query"></textarea>
+                        </div>
+                    </div>
+                    <div class="text-right chart-button-group">
+                        <button type="button" class="btn btn-info" id="btn_run">RUN</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-7 card-wrapper" id="result">
+    </div>
+</div>
+<!-- hidden -->
+<div class="card" id="card-dummy" style="display:none;" >
+  <div class="card-body">
+    <h6 id="title" class="card-title"></h6>
+    <div id="chart"></div>
+      <div class="text-right chart-button-group">
+        <button type="button" class="btn btn-primary" id="btn_add">ADD</button>
+      </div>
+  </div>
+</div>
+{% autoescape false %}
+<script>
+    google.charts.load('current', {'packages':['line','bar']});
+
+    var charts = {{ '[]' if not charts else charts }};
+
+    $('#btn-load').on('click', function(e) {
+        var selectedId = $('#select-chart').val();
+        var selectedChart = null;
+        for(var chart_idx in charts) {
+            var chart = charts[chart_idx];
+            if(chart['id'] == selectedId) {
+                selectedChart = chart;
+            }
+        }
+        traverseObject($('#chart-data').find('input,textarea,select'), function(object) {
+            if(selectedChart[object.name]) {
+                if('options' === object.name) {
+                    $(object).val(JSON.stringify(selectedChart[object.name]));
+                } else {
+                    $(object).val(selectedChart[object.name]);
+                }
+            }
+        });
+    });
+
+    function traverseObject(object, callback) {
+        for(var i=0,len=object.length; i < len; i++ ) {
+            callback.call(this, object[i]);
+        }
+    }
+
+    function disable(object) {
+        object.prop("disabled",true);
+    }
+
+    function enable(object) {
+        object.prop("disabled",false);
+    }
+
+    function addChartListener() {
+      $('#btn_add').on('click', function(e) {
+          disable($('#btn_add'));
+          var chart = objectifyForm($('#chart-data').serializeArray());
+          chart.header = chart.header.split(',');
+          console.log("add chart="+chart);
+          $.ajax({
+              url: "/chart/builder",
+              method: 'POST',
+              contentType: "application/json; charset=utf-8",
+              dataType: 'json',
+              data: JSON.stringify({chart:chart}),
+              success: function(data) {
+                  console.log(data);
+                  enable($('#btn_add'));
+              }
+          });
+      });
+    }
+
+    $('#btn_run').on('click', function(e) {
+        disable($('#btn_run'));
+        var chart = objectifyForm($('#chart-data').serializeArray());
+        chart.header = chart.header.split(',');
+        chart.options = JSON.parse(chart.options);
+        console.log("run chart="+chart);
+        $.ajax({
+            url: "/chart/builder/query",
+            method: 'POST',
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            data: JSON.stringify({query:chart.query}),
+            success: function(data) {
+                console.log("success data="+data);
+                if(data) {
+                    chart['data'] = data;
+                    $('#result').empty();
+                    addCard(chart, $('#result'));
+                    addChartListener();
+                }
+                enable($('#btn_run'));
+            },
+            error: function(error) {
+                console.log("error data="+error);
+                enable($('#btn_run'));
+            }
+        });
+    });
+
+    function objectifyForm(formArray) {
+      var returnArray = {};
+      for (var i = 0; i < formArray.length; i++){
+        returnArray[formArray[i]['name']] = formArray[i]['value'];
+      }
+      return returnArray;
+    }
+
+    function addCard(chart, row) {
+      //console.log(chart);
+      // make card
+      var card = $('#card-dummy').clone();
+      card.attr('id',"chart-"+chart.title);
+      card.css('display','');
+      card.addClass('col-'+chart.width);
+      card.find('#title').append(chart.title);
+      row.append(card);
+      chart.options.width = card.find('#chart').width();
+      // draw chart
+      var container = null;
+      if('bar' == chart.type) {
+        container = new google.charts.Bar(card.find('#chart').get(0));
+      } else {
+        container = new google.charts.Line(card.find('#chart').get(0));
+      }
+      var json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
+      container.draw(json_data, google.charts.Line.convertOptions(chart.options));
+    }
+</script>
+{% endautoescape %}
+{% endblock %}

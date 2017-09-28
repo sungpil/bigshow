@@ -1,0 +1,212 @@
+{% extends "layout.html" %}
+{% block body %}
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/card.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/chart.css') }}">
+  {% autoescape false %}
+  <script>
+    google.charts.load('current', {'packages':['line','bar']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    var charts = {{ charts }};
+
+    function drawChart() {
+      charts.forEach( function(chart) {
+        addCard(chart, $('#row1'));
+      });
+    }
+
+    function addCard(chart, row) {
+      //console.log(chart);
+      // make card
+      card = makeCard(chart);
+      // add card
+      row.append(card);
+      chart.options.width = card.find('#chart').width();
+      card.find('.card').height(card.find('.card').height()+chart.options.height);
+      // select options
+      card.find('select[name=chart-type]').val(chart.type);
+      card.find('select[name=chart-width]').val(chart.width);
+      if(chart.data) {
+        // draw graph
+        drawGraph(card.find('#chart').get(0), chart);
+      } else {
+        // load data
+        getData(chart, card);
+      }
+    }
+
+    function getData(chart, card) {
+      if(chart['timer_id']) {
+        clearTimeout(chart['timer_id']);
+        chart['timer_id'] = null;
+      }
+      $.ajax({
+        url: "/chart/"+chart['id'],
+        method: 'GET',
+        contentType: "application/json; charset=utf-8",
+        dataType: 'json',
+        success: function(data) {
+          console.log(data);
+          if(data) {
+            if(chart['timer_id']) {
+              clearTimeout(chart['timer_id']);
+              chart['timer_id'] = null;
+            }
+            chart['data'] = data;
+            drawGraph(card.find('#chart').get(0), chart);
+          } else {
+            if(!chart['timer_id']) {
+              chart['timer_id'] = setTimeout(getData, 5000, chart, card);
+            }
+          }
+        },
+        error: function(error) {
+          console.log(error);
+          if(!chart['timer_id']) {
+            chart['timer_id'] = setTimeout(getData, 5000, chart, card);
+          }
+        }
+      });
+    }
+
+    function makeCard(chart) {
+      var card = $('#card-dummy').clone();
+      card.attr('id',"chart-"+chart.id);
+      card.attr('chart-id',chart.id);
+      card.find('#title').append(chart.title);
+      card.addClass('col-'+chart.width);
+      card.css('display','');
+      return card;
+    }
+
+    function drawGraph(graph, chart) {
+      if(chart.data) {
+        $(graph).empty();
+        var container = null;
+        if('bar' == chart.type) {
+          container = new google.charts.Bar(graph);
+        } else {
+          container = new google.charts.Line(graph);
+        }
+        var data = [chart.header].concat(chart.data);
+        var json_data = google.visualization.arrayToDataTable(data);
+        container.draw(json_data, google.charts.Line.convertOptions(chart.options));
+      }
+    }
+
+    function deleteCard(target) {
+      var wrapper = $(target).closest('.card-wrapper');
+      var chart_id = $(wrapper).attr('chart-id');
+      console.log("delete chart_id="+chart_id);
+      $.ajax({
+          url: "/chart",
+          method: 'DELETE',
+          contentType: "application/json; charset=utf-8",
+          dataType: 'json',
+          data: JSON.stringify({chart_id:chart_id}),
+          success: function(data) {
+              console.log(data);
+              $(wrapper).remove();
+          }
+      });
+    }
+
+    function changeCardType(target) {
+      var wrapper = $(target).closest('.card-wrapper');
+      var chart_id = $(wrapper).attr('chart-id');
+      var chart = getChartById(chart_id);
+      if(chart) {
+        console.log("changeCardType chart_id="+chart_id+",from="+chart.type+",to="+$(target).val());
+        var type = $(target).val();
+        $.ajax({
+          url: "/chart",
+          method: 'PUT',
+          contentType: "application/json; charset=utf-8",
+          dataType: 'json',
+          data: JSON.stringify({chart:{'id':chart_id,'type':type}}),
+          success: function(data) {
+            console.log(data);
+            chart.type = type;
+            drawGraph($(wrapper).find('#chart').get(0), chart);
+          }
+        });
+      }
+    }
+
+    function changeCardWidth(target) {
+      var wrapper = $(target).closest('.card-wrapper');
+      var chart_id = $(wrapper).attr('chart-id');
+      var chart = getChartById(chart_id);
+      if(chart) {
+        var width = $(target).val();
+        $.ajax({
+          url: "/chart",
+          method: 'PUT',
+          contentType: "application/json; charset=utf-8",
+          dataType: 'json',
+          data: JSON.stringify({chart:{'id':chart_id,'width':width}}),
+          success: function(data) {
+            console.log(data);
+            $(wrapper).removeClass('col-'+chart.width).addClass('col-'+width);
+            console.log("changeCardWidth chart_id="+chart_id+",from="+chart.width+",to="+width);
+            chart.width = width;
+            chart.options.width = $(wrapper).find('#chart').width();
+            drawGraph($(wrapper).find('#chart').get(0), chart);
+          }
+        });
+      }
+    }
+
+    function getChartById(chart_id) {
+      for( var idx in charts ) {
+        if(chart_id == charts[idx].id) {
+          return charts[idx];
+        }
+      }
+      return null;
+    }
+  </script>
+  {% endautoescape %}
+  <div class="row" id="row1"></div>
+  <!-- hidden -->
+  <div class="card-wrapper" style="display:none;" id="card-dummy">
+    <div class="card">
+      <div class="card-body">
+        <h6 id="title" class="card-title">
+          <div class="btn-dropdown">
+            <a href="#test" class="dropdown-toggle" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="material-icons btn-more">more_vert</i>
+            </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="#">CSV</a>
+              <a class="dropdown-item" href="#">Config</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="javascript:;" onclick="deleteCard(this);">Delete</a>
+            </div>
+          </div>
+          <select name="chart-width" onchange="changeCardWidth(this);">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+          </select>
+          <select name="chart-type" onchange="changeCardType(this);">
+            <option value="line">line</option>
+            <option value="bar">bar</option>
+          </select>
+        </h6>
+        <div class="chart" id="chart">
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

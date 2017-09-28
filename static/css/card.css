@@ -1,0 +1,42 @@
+.card {
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.3), 0 0px 1px 0 rgba(0,0,0,0.24), 0 2px 1px -1px rgba(0,0,0,0.12);
+  border: none;
+  border-radius: 2px;
+}
+.card-body {
+  padding: 1rem;
+}
+.card-title h1,h2,h3,h4,h5,h6{
+  margin-bottom: 1.25rem;
+  font-weight:200;
+  color: #999;
+}
+.card-title select {
+    float: right;
+    color: #666;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: .25rem;
+    transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+    font-size: 12px;
+    margin-left: 10px;
+}
+.card-wrapper {
+    padding: 5px;
+}
+.card .btn-dropdown {
+    float: right;
+    padding-left: 10px;
+}
+.card .dropdown-toggle::after {
+    display: none;
+}
+.card .dropdown-menu {
+    min-width: 80px;
+    font-size: 12px;
+}
+.card .btn-more {
+    color: #999;
+    font-size: 20px;
+}

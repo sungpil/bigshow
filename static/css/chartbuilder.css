@@ -1,0 +1,24 @@
+form div {
+    margin-top: 10px;
+}
+.card-title .custom-select {
+    height: calc(1.75rem + 2px);
+}
+.flex-justify {
+    margin-bottom: -1rem;
+    display: flex;
+    justify-content: space-between;
+}
+.row {
+    padding: 5px;
+}
+.chart-button-group button{
+    font-size: 12px;
+}
+#btn-load {
+    float: right;
+    font-size: 12px;
+    line-height: 12px;
+    border: 1px solid rgba(0,0,0,.15);
+    margin-left: 5px;
+}
