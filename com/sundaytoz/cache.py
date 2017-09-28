@@ -1,4 +1,5 @@
 from com.sundaytoz.logger import Logger
+from pymemcache.client.base import PooledClient
 
 class Singleton(type):
     _instances = {}
@@ -13,18 +14,17 @@ class Cache(metaclass=Singleton):
     __cache = None
 
     def get(self, key):
-        ret = self.__get_cache().get(key.encode('utf-8'))
+        ret = self.__get_cache().get(str(key))
         if ret:
             ret = ret.decode('utf-8')
         return ret
 
     def set(self, key, val, ttl=86400):
-        return self.__get_cache().set(key.encode('utf-8'), val, ttl)
+        return self.__get_cache().set(str(key), val, ttl)
 
     def __get_cache(self):
         if not self.__cache:
             Logger.debug("__get_cache")
-            from pymemcache.client.base import Client
             from config.dev import config
-            self.__cache = Client(server=config['cache']['server'])
+            self.__cache = PooledClient(server=config['cache']['server'])
         return self.__cache
