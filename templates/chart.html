@@ -8,12 +8,15 @@
     google.charts.load('current', {'packages':['line','bar']});
     google.charts.setOnLoadCallback(drawChart);
 
+    var last_width = 0;
+
     var charts = {{ charts }};
 
     function drawChart() {
       charts.forEach( function(chart) {
         addCard(chart, $('#row1'));
       });
+      last_width = $( window ).width();
     }
 
     function addCard(chart, row) {
@@ -169,15 +172,19 @@
 
     $( window ).resize(function() {
       if(charts) {
-        charts.forEach(function(chart) {
-          if(chart['data']) {
-            var card = $('.card-wrapper[chart-id="'+chart['id']+'"]');
-            if(card) {
-              chart.options.width = card.find('#chart').width();
-              drawGraph(card.find('#chart').get(0), chart);
+        var width = $( window ).width();
+        if(Math.abs(last_width-width) > 100) {
+          last_width = width;
+          charts.forEach(function(chart) {
+            if(chart['data']) {
+              var card = $('.card-wrapper[chart-id="'+chart['id']+'"]');
+              if(card) {
+                chart.options.width = card.find('#chart').width();
+                drawGraph(card.find('#chart').get(0), chart);
+              }
             }
-          }
-        });
+          });
+        }
       }
     });
   </script>
