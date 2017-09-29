@@ -21,7 +21,7 @@ app.config['SESSION_TYPE'] = 'filesystem'
 def before():
     Logger.setLevel(Logger.DEBUG)
     Logger.debug("before url={url}".format(url=request.endpoint))
-    if not request.endpoint or  'gmail_auth' not in request.endpoint:
+    if not request.endpoint or 'gmail_auth' not in request.endpoint:
         redirection = oauth2check()
         if redirection:
             return redirection
@@ -40,14 +40,12 @@ def chart():
 @app.route('/chart', methods=['DELETE'])
 def chart_delete():
     chart_id = request.json['chart_id']
-    Chart().delete(chart_id)
-    return json.dumps({'success':True})
+    return json.dumps({'success':Chart().delete(chart_id)})
 
 @app.route('/chart/', methods=['PUT'])
 def chart_update():
     chart = request.json['chart']
-    Chart().update(chart)
-    return json.dumps({'success':True})
+    return json.dumps({'success':Chart().update(chart)})
 
 @app.route('/chart/<int:chart_id>', methods=['GET'])
 def chart_data(chart_id):
@@ -66,8 +64,7 @@ def chart_builder():
 
 @app.route('/chart/builder', methods=['POST'])
 def chart_builder_add():
-    Chart().add(request.json['chart'])
-    return json.dumps({'success':True})
+    return json.dumps({'success':Chart().add(request.json['chart'])})
 
 @app.route('/chart/builder/query', methods=['POST'])
 def chart_builder_query():
