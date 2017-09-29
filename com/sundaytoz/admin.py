@@ -18,7 +18,7 @@ class Admin(metaclass=Singleton):
         connection = self.__getDB()
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT * FROM usr WHERE email=%s"
+                sql = "SELECT idx, email, name, lv, dept, permission, time_register FROM usr WHERE email=%s"
                 cursor.execute(sql, (email,))
                 row = cursor.fetchone()
             connection.commit()
