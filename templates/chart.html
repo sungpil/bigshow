@@ -166,6 +166,20 @@
       }
       return null;
     }
+
+    $( window ).resize(function() {
+      if(charts) {
+        charts.forEach(function(chart) {
+          if(chart['data']) {
+            var card = $('.card-wrapper[chart-id="'+chart['id']+'"]');
+            if(card) {
+              chart.options.width = card.find('#chart').width();
+              drawGraph(card.find('#chart').get(0), chart);
+            }
+          }
+        });
+      }
+    });
   </script>
   {% endautoescape %}
   <div class="row" id="row1"></div>
