@@ -27,6 +27,7 @@ class Chart(metaclass=Singleton):
             connection.commit()
         finally:
             connection.close()
+        return True
 
     def get_query(self, chart_id):
         Logger.info("get: chart_id={chart_id}".format(chart_id=chart_id))
@@ -69,6 +70,7 @@ class Chart(metaclass=Singleton):
             connection.commit()
         finally:
             connection.close()
+        return True
 
     def update(self, chart):
         schema = set(self.__schema) - set(['id','query'])
@@ -86,6 +88,7 @@ class Chart(metaclass=Singleton):
             connection.commit()
         finally:
             connection.close()
+        return True
 
 
     def __getDB(self):
