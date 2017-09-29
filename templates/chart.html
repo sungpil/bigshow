@@ -75,7 +75,7 @@
       card.attr('id',"chart-"+chart.id);
       card.attr('chart-id',chart.id);
       card.find('#title').append(chart.title);
-      card.addClass('col-'+chart.width);
+      card.addClass('col-lg-'+chart.width);
       card.css('display','');
       return card;
     }
@@ -148,7 +148,7 @@
           data: JSON.stringify({chart:{'id':chart_id,'width':width}}),
           success: function(data) {
             console.log(data);
-            $(wrapper).removeClass('col-'+chart.width).addClass('col-'+width);
+            $(wrapper).removeClass('col-lg-'+chart.width).addClass('col-lg-'+width);
             console.log("changeCardWidth chart_id="+chart_id+",from="+chart.width+",to="+width);
             chart.width = width;
             chart.options.width = $(wrapper).find('#chart').width();
