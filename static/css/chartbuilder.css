@@ -12,6 +12,9 @@ form div {
 .row {
     padding: 5px;
 }
+.chart-button-group {
+    padding-top: 10px;
+}
 .chart-button-group button{
     font-size: 12px;
 }
