@@ -45,7 +45,7 @@ def chart_delete():
 
 @app.route('/chart/', methods=['PUT'])
 def chart_update():
-    return json.dumps({'success':Chart().update(chart)})
+    return json.dumps({'success':Chart().update(request.json['chart'])})
 
 @app.route('/chart/<int:chart_id>', methods=['GET'])
 def chart_data(chart_id):
