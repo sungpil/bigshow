@@ -45,12 +45,7 @@ def chart_delete():
 
 @app.route('/chart/', methods=['PUT'])
 def chart_update():
-    chart = request.json['chart']
-    if ChartManager().del_cache(chart['id']):
-        success = Chart().update(chart)
-    else:
-        success = False
-    return json.dumps({'success':success})
+    return json.dumps({'success':Chart().update(chart)})
 
 @app.route('/chart/<int:chart_id>', methods=['GET'])
 def chart_data(chart_id):
@@ -73,7 +68,12 @@ def chart_builder_add():
 
 @app.route('/chart/builder', methods=['PUT'])
 def chart_builder_update():
-    return json.dumps({'success':Chart().update(request.json['chart'])})
+    chart = request.json['chart']
+    if ChartManager().del_cache(chart['id']):
+        success = Chart().update(chart)
+    else:
+        success = False
+    return json.dumps({'success':success})
 
 @app.route('/chart/builder/query', methods=['POST'])
 def chart_builder_query():
