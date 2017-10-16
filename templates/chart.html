@@ -5,7 +5,7 @@
   <link rel="stylesheet" href="{{ url_for('static',filename='css/chart.css') }}">
   {% autoescape false %}
   <script>
-    google.charts.load('current', {'packages':['line','bar']});
+    google.charts.load('current', {'packages':['line','bar','table']});
     google.charts.setOnLoadCallback(drawChart);
 
     var last_width = 0;
@@ -89,8 +89,10 @@
         var container = null;
         if('bar' == chart.type) {
           container = new google.charts.Bar(graph);
-        } else {
+        } else if('line' == chart.type) {
           container = new google.charts.Line(graph);
+        } else if('table' == chart.type) {
+          container = new google.charts.Table(graph);
         }
         var data = [chart.header].concat(chart.data);
         var json_data = google.visualization.arrayToDataTable(data);

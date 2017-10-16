@@ -32,6 +32,7 @@
                             <select class="form-control" name="type">
                                 <option selected value="line">line</option>
                                 <option value="bar">bar</option>
+                                <option value="table">table</option>
                             </select>
                         </div>
                     </div>
@@ -94,7 +95,7 @@
 </div>
 {% autoescape false %}
 <script>
-    google.charts.load('current', {'packages':['line','bar']});
+    google.charts.load('current', {'packages':['line','bar','table']});
 
     var charts = {{ '[]' if not charts else charts }};
 
@@ -203,8 +204,11 @@
       var container = null;
       if('bar' == chart.type) {
         container = new google.charts.Bar(card.find('#chart').get(0));
-      } else {
+      } else if('line' == chart.type) {
         container = new google.charts.Line(card.find('#chart').get(0));
+      } else if('table' == chart.type) {
+        chart.options.width = '100%';
+        container = new google.visualization.Table(card.find('#chart').get(0));
       }
       var json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
       container.draw(json_data, google.charts.Line.convertOptions(chart.options));
