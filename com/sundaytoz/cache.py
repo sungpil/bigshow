@@ -22,6 +22,9 @@ class Cache(metaclass=Singleton):
     def set(self, key, val, ttl=86400):
         return self.__get_cache().set(str(key), val, ttl)
 
+    def delete(self, key):
+        return self.__get_cache().delete(key)
+
     def __get_cache(self):
         if not self.__cache:
             Logger.debug("__get_cache")

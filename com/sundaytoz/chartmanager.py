@@ -39,3 +39,7 @@ class ChartManager(metaclass=Singleton):
         else:
             Logger.debug("from CACHE")
             return ast.literal_eval(results)
+
+    def del_cache(self, chart_id):
+        status_key = "last_job:{chart_id}".format(chart_id=chart_id)
+        return Cache().delete(status_key)
