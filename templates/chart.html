@@ -26,7 +26,11 @@
       card = makeCard(chart);
       // add card
       row.append(card);
-      chart.options.width = card.find('#chart').width();
+      if('table' === chart.type) {
+        chart.options.width = '100%';
+      } else {
+        chart.options.width = card.find('#chart').width();
+      }
       card.find('.card').height(card.find('.card').height()+chart.options.height);
       // select options
       card.find('select[name=chart-type]').val(chart.type);
