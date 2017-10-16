@@ -15,7 +15,7 @@
                         <select class="custom-select" id="select-chart">
                             <option value="">차트를 선택</option>
                             {% for chart in charts %}
-                            <option value="{{ chart['id'] }}">{{ chart['title'] }}</option>
+                            <option value="{{ chart['id'] }}">({{ chart['id'] }}) {{ chart['title'] }}</option>
                             {% endfor %}
                         </select>
                     </small>
