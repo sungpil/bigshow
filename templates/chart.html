@@ -157,7 +157,9 @@
             $(wrapper).removeClass('col-lg-'+chart.width).addClass('col-lg-'+width);
             console.log("changeCardWidth chart_id="+chart_id+",from="+chart.width+",to="+width);
             chart.width = width;
-            chart.options.width = $(wrapper).find('#chart').width();
+            if('table' != chart.type) {
+              chart.options.width = $(wrapper).find('#chart').width();
+            }
             drawGraph($(wrapper).find('#chart').get(0), chart);
           }
         });
