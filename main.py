@@ -7,6 +7,7 @@ from com.google.jobmanager import JobManager
 from com.sundaytoz.chart import Chart
 from com.sundaytoz.chartmanager import ChartManager
 from com.sundaytoz.logger import Logger
+from config.dev import config
 
 app = Flask(__name__)
 app.register_blueprint(gmail_auth)
@@ -66,6 +67,10 @@ def chart_builder():
 def chart_builder_add():
     return json.dumps({'success':Chart().add(request.json['chart'])})
 
+@app.route('/chart/builder', methods=['PUT'])
+def chart_builder_update():
+    return json.dumps({'success':Chart().update(request.json['chart'])})
+
 @app.route('/chart/builder/query', methods=['POST'])
 def chart_builder_query():
     query = request.json['query']
@@ -74,4 +79,5 @@ def chart_builder_query():
     return json.dumps(list(map(lambda x: list(x), results)))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',port=9002)
+    port = config['server']['port']
+    app.run(host='0.0.0.0',port=port)

@@ -73,18 +73,21 @@ class Chart(metaclass=Singleton):
         return True
 
     def update(self, chart):
-        schema = set(self.__schema) - set(['id','query'])
+        schema = set(self.__schema) - {'id'}
         targets = list(schema & chart.keys())
         columns = ','.join(map(lambda x: "{x}=%s".format(x=x), targets))
         values = []
         for key in targets:
-            values.append(chart[key])
+            if isinstance(chart[key], (list, dict)):
+                values.append("{x}".format(x=json.dumps(chart[key])))
+            else:
+                values.append(chart[key])
         sql = "UPDATE charts SET {columns} WHERE id={chart_id}".format(columns=columns,chart_id=chart['id'])
-        Logger.debug("targets={targets}, sql={sql}, values={values}".format(targets=targets, sql=sql, values=','.join(values)))
+        Logger.debug("columns={columns},sql={sql},values={values}".format(columns=columns,sql=sql,values=values))
         connection = self.__getDB()
         try:
             with connection.cursor() as cursor:
-                cursor.execute(sql, set(values))
+                cursor.execute(sql, tuple(values))
             connection.commit()
         finally:
             connection.close()
