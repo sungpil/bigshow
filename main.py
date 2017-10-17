@@ -37,7 +37,7 @@ def charts():
     charts = Chart().get_all()
     for chart in charts:
         chart.pop('query',None)
-    return render_template('charts.html', app_name="PuzzleArt", charts=charts)
+    return render_template('charts.html', app_name=config['app']['name'], charts=charts)
 
 
 @app.route('/charts', methods=['POST'])
