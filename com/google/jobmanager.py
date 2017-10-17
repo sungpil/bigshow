@@ -65,6 +65,7 @@ class JobManager(metaclass=Singleton):
 
     def __getClient(self):
         if not self.__client:
-            self.__client = bigquery.Client(project='puzzle-art-41863118')
+            from config.dev import config
+            self.__client = bigquery.Client(project=config['bigquery']['project_id'])
         self.__client.list_jobs()
         return self.__client
