@@ -1,5 +1,6 @@
 import datetime
 from com.sundaytoz.logger import Logger
+from config.dev import config
 
 class Singleton(type):
     _instances = {}
@@ -12,6 +13,9 @@ class CustomQuery(metaclass=Singleton):
     pass
 
     def retention(self, start_date, end_date, interval):
+        project_id = config['bigquery']['project_id']
+        dataset_nru = "{0}.{1}".format(project_id, config['bigquery']['dataset']['nru'])
+        dataset_dau = "{0}.{1}".format(project_id, config['bigquery']['dataset']['dau'])
         today = datetime.datetime.now() - datetime.timedelta(days=1)
         if end_date > today:
             end_date = today
@@ -27,9 +31,9 @@ class CustomQuery(metaclass=Singleton):
                 if target_date <= today:
                     if cnt == 0:
                         date_str = target_date.strftime('%y%m%d')
-                        query_list.append("(SELECT count(*) FROM `puzzle-art-41863118.fopen.{0}`) r{1} ".format(date_str, cnt))
+                        query_list.append("(SELECT count(*) FROM `{0}.{1}`) r{2} ".format(dataset_nru, date_str, cnt))
                     else:
-                        query_list.append("(SELECT count(*) FROM `puzzle-art-41863118.fopen.{0}` t1 inner join `puzzle-art-41863118.idfa.{1}` t2 ON t1.resettable_device_id = t2.resettable_device_id) r{2}".format(date_str, target_date.strftime('%y%m%d'), cnt))
+                        query_list.append("(SELECT count(*) FROM `{0}.{1}` t1 inner join `{2}.{3}` t2 ON t1.resettable_device_id = t2.resettable_device_id) r{4}".format(dataset_nru, date_str, dataset_dau, target_date.strftime('%y%m%d'), cnt))
                 else:
                     query_list.append("0 r{0}".format(cnt))
                 cnt = cnt+1

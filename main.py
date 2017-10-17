@@ -75,7 +75,7 @@ def charts_mget(chart_ids):
 @app.route('/chartbuilder', methods=['GET'], defaults={'chart_id':None})
 @app.route('/chartbuilder/<int:chart_id>', methods=['GET'])
 def chartbuilder(chart_id):
-    return render_template('chartbuilder.html', app_name="PuzzleArt", charts=Chart().get_all(), selected_chart_id=chart_id)
+    return render_template('chartbuilder.html', app_name=config['app']['name'], charts=Chart().get_all(), selected_chart_id=chart_id)
 
 
 @app.route('/chartbuilder', methods=['POST'])
