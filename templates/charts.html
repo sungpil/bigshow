@@ -121,6 +121,12 @@
       });
     }
 
+    function editCard(target) {
+      var wrapper = $(target).closest('.card-wrapper');
+      var chart_id = $(wrapper).attr('chart-id');
+      $(location).attr('href', '/chartbuilder/'+chart_id);
+    }
+
     function changeCardType(target) {
       var wrapper = $(target).closest('.card-wrapper');
       var chart_id = $(wrapper).attr('chart-id');
@@ -209,7 +215,7 @@
             </a>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="#">CSV</a>
-              <a class="dropdown-item" href="#">Config</a>
+              <a class="dropdown-item" href="javascript:;" onclick="editCard(this);">Edit</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="javascript:;" onclick="deleteCard(this);">Delete</a>
             </div>

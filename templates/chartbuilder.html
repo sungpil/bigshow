@@ -113,25 +113,40 @@
 
     var charts = {{ '[]' if not charts else charts }};
 
+    $(window).ready(function() {
+        var selected_chart_id = {{ 0 if not selected_chart_id else selected_chart_id }};
+        if(selected_chart_id) {
+            $('#select-chart').val(selected_chart_id);
+            setChartData(getChartById(selected_chart_id));
+        }
+    });
+
     $('#btn-load').on('click', function(e) {
         var selectedId = $('#select-chart').val();
-        var selectedChart = null;
-        for(var chart_idx in charts) {
-            var chart = charts[chart_idx];
-            if(chart['id'] == selectedId) {
-                selectedChart = chart;
-            }
-        }
+        setChartData(getChartById(selectedId));
+    });
+
+    function setChartData(chart) {
         traverseObject($('#chart-data').find('input,textarea,select'), function(object) {
-            if(selectedChart[object.name]) {
+            if(chart[object.name]) {
                 if('options' === object.name) {
-                    $(object).val(JSON.stringify(selectedChart[object.name]));
+                    $(object).val(JSON.stringify(chart[object.name]));
                 } else {
-                    $(object).val(selectedChart[object.name]);
+                    $(object).val(chart[object.name]);
                 }
             }
         });
-    });
+    }
+
+    function getChartById(chart_id) {
+        for(var chart_idx in charts) {
+            var chart = charts[chart_idx];
+            if(chart['id'] == chart_id) {
+                return chart;
+            }
+        }
+        return null;
+    }
 
     function traverseObject(object, callback) {
         for(var i=0,len=object.length; i < len; i++ ) {
@@ -196,7 +211,7 @@
         chart.options = JSON.parse(chart.options);
         console.log("run chart="+chart);
         $.ajax({
-            url: "/chartbuilder/query",
+            url: "/chartbuilder",
             method: 'POST',
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
