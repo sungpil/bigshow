@@ -50,7 +50,7 @@
         chart['timer_id'] = null;
       }
       $.ajax({
-        url: "/chart/"+chart['id'],
+        url: "/charts/"+chart['id'],
         method: 'GET',
         contentType: "application/json; charset=utf-8",
         dataType: 'json',
@@ -110,11 +110,10 @@
       var chart_id = $(wrapper).attr('chart-id');
       console.log("delete chart_id="+chart_id);
       $.ajax({
-          url: "/chart",
+          url: "/charts/"+chart_id,
           method: 'DELETE',
           contentType: "application/json; charset=utf-8",
           dataType: 'json',
-          data: JSON.stringify({chart_id:chart_id}),
           success: function(data) {
               console.log(data);
               $(wrapper).remove();
@@ -130,7 +129,7 @@
         console.log("changeCardType chart_id="+chart_id+",from="+chart.type+",to="+$(target).val());
         var type = $(target).val();
         $.ajax({
-          url: "/chart",
+          url: "/charts/"+chart_id,
           method: 'PUT',
           contentType: "application/json; charset=utf-8",
           dataType: 'json',
@@ -151,7 +150,7 @@
       if(chart) {
         var width = $(target).val();
         $.ajax({
-          url: "/chart",
+          url: "/charts/"+chart_id,
           method: 'PUT',
           contentType: "application/json; charset=utf-8",
           dataType: 'json',

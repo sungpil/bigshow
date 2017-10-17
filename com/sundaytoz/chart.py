@@ -13,34 +13,46 @@ class Chart(metaclass=Singleton):
     pass
 
     __db = None
-    __schema = ['id','title','type','width','header','options','query']
+    __schema = ['id','title','chart_type','type','width','header','options','query']
 
     def add(self, chart):
         Logger.error("add: chart={chart}".format(chart=chart))
         connection = self.__getDB()
         try:
             with connection.cursor() as cursor:
-                sql = "INSERT INTO charts(title, type, width, options, header, query) VALUES(%s, %s, %s, %s, %s, %s)"
+                sql = "INSERT INTO charts(title, chart_type, type, width, options, header, query) VALUES(%s, %s, %s, %s, %s, %s, %s)"
                 cursor.execute(sql, (
-                chart['title'], chart['type'], chart['width'], chart['options'], json.dumps(chart['header']),
+                chart['title'], chart['chart_type'], chart['type'], chart['width'], chart['options'], json.dumps(chart['header']),
                 chart['query'],))
             connection.commit()
         finally:
             connection.close()
         return True
 
-    def get_query(self, chart_id):
-        Logger.info("get: chart_id={chart_id}".format(chart_id=chart_id))
+    def get(self, chart_id, columns):
+        Logger.info("get: chart_id={chart_id},columns={columns}".format(chart_id=chart_id,columns=columns))
+        if not columns:
+            columns = ['*']
+        if not isinstance(columns, list):
+            columns = [columns]
         connection = self.__getDB()
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT query FROM charts WHERE id=%s"
+                sql = "SELECT {0} FROM charts WHERE id=%s".format(','.join(columns))
                 cursor.execute(sql, (chart_id,))
                 row = cursor.fetchone()
             connection.commit()
         finally:
             connection.close()
-        return row['query']
+        return row
+
+    def get_query(self, chart_id):
+        Logger.info("get: chart_id={chart_id}".format(chart_id=chart_id))
+        row = self.get(chart_id, ['query'])
+        if row:
+            return row['query']
+        else:
+            return None
 
     def get_all(self):
         Logger.info("get_all")
@@ -72,7 +84,7 @@ class Chart(metaclass=Singleton):
             connection.close()
         return True
 
-    def update(self, chart):
+    def update(self, chart_id, chart):
         schema = set(self.__schema) - {'id'}
         targets = list(schema & chart.keys())
         columns = ','.join(map(lambda x: "{x}=%s".format(x=x), targets))
@@ -82,7 +94,7 @@ class Chart(metaclass=Singleton):
                 values.append("{x}".format(x=json.dumps(chart[key])))
             else:
                 values.append(chart[key])
-        sql = "UPDATE charts SET {columns} WHERE id={chart_id}".format(columns=columns,chart_id=chart['id'])
+        sql = "UPDATE charts SET {columns} WHERE id={chart_id}".format(columns=columns,chart_id=chart_id)
         Logger.debug("columns={columns},sql={sql},values={values}".format(columns=columns,sql=sql,values=values))
         connection = self.__getDB()
         try:

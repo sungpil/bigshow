@@ -29,6 +29,15 @@
                         </div>
                     </div>
                     <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">ChartType</label>
+                        <div class="col-sm-11">
+                            <select class="form-control" name="chart_type">
+                                <option selected value="0">bigquery</option>
+                                <option value="1">custom</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
                         <label class="col-sm-1 col-form-label">Type</label>
                         <div class="col-sm-11">
                             <select class="form-control" name="type">
@@ -83,17 +92,19 @@
             </div>
         </div>
     </div>
-    <div class="col-7 card-wrapper" id="result">
+    <div class="col-7" id="result">
     </div>
 </div>
 <!-- hidden -->
-<div class="card" id="card-dummy" style="display:none;" >
-  <div class="card-body">
-    <h6 id="title" class="card-title"></h6>
-    <div id="chart"></div>
-      <div class="text-right chart-button-group">
-        <button type="button" class="btn btn-primary" id="btn_add">ADD</button>
-      </div>
+<div class="card-wrapper" id="card-dummy" style="display:none;" >
+  <div class="card">
+    <div class="card-body">
+      <h6 id="title" class="card-title"></h6>
+      <div id="chart"></div>
+        <div class="text-right chart-button-group">
+          <button type="button" class="btn btn-primary" id="btn_add">ADD</button>
+        </div>
+    </div>
   </div>
 </div>
 {% autoescape false %}
@@ -143,7 +154,7 @@
           chart.header = chart.header.split(',');
           console.log("add chart="+chart);
           $.ajax({
-              url: "/chart/builder",
+              url: "/charts",
               method: 'POST',
               contentType: "application/json; charset=utf-8",
               dataType: 'json',
@@ -164,7 +175,7 @@
         chart.options = JSON.parse(chart.options);
         console.log("update chart="+chart);
         $.ajax({
-            url: "/chart/builder",
+            url: "/charts/"+chart.id,
             method: 'PUT',
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
@@ -185,11 +196,11 @@
         chart.options = JSON.parse(chart.options);
         console.log("run chart="+chart);
         $.ajax({
-            url: "/chart/builder/query",
+            url: "/chartbuilder/query",
             method: 'POST',
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
-            data: JSON.stringify({query:chart.query}),
+            data: JSON.stringify({query:chart.query,chart_type:chart.chart_type}),
             success: function(data) {
                 console.log("success data="+data);
                 if(data) {
