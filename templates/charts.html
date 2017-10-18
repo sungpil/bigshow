@@ -1,9 +1,11 @@
 {% extends "layout.html" %}
 {% block body %}
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript" src="{{ url_for('static',filename='js/stzchart.js') }}"></script>
   <link rel="stylesheet" href="{{ url_for('static',filename='css/card.css') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/chart.css') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/googlechart.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/stzchart.css') }}">
   {% autoescape false %}
   <script>
     google.charts.load('current', {'packages':['line','bar','table']});
@@ -94,13 +96,18 @@
         var container = null;
         if('bar' == chart.type) {
           container = new google.charts.Bar(graph);
+          json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
         } else if('line' == chart.type) {
           container = new google.charts.Line(graph);
-        } else {
+          json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
+        } else if('table' == chart.type) {
+          chart.options.width = '100%';
           container = new google.visualization.Table(graph);
+          json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
+        } else if('table_rtt' == chart.type) {
+          container = new sundaytoz.chart.RetentionTable(graph);
+          json_data = [chart.header].concat(chart.data);
         }
-        var data = [chart.header].concat(chart.data);
-        var json_data = google.visualization.arrayToDataTable(data);
         container.draw(json_data, google.charts.Line.convertOptions(chart.options));
       }
     }
@@ -238,6 +245,7 @@
             <option value="line">line</option>
             <option value="bar">bar</option>
             <option value="table">table</option>
+            <option value="table_rtt">table_rtt</option>
           </select>
         </h6>
         <div class="chart" id="chart">

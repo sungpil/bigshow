@@ -1,0 +1,71 @@
+.stz-graph-retention-table {
+  width: 100%;
+  border-collapse:collapse;
+  font-size: 13px;
+  font-weight: 300;
+  text-align: center;
+}
+.stz-graph-retention-table tr {
+  border-bottom: 1px solid #eee;
+  height: 100%;
+}
+.stz-graph-retention-table th {
+  font-weight: 400;
+  text-align: center;
+  padding:5px 0px 5px 0px;
+}
+.stz-graph-retention-table td {
+  padding: 0px 1px 1px 0px;
+  text-align: center;
+}
+.stz-graph-retention-table .col-data {
+  text-align: center;
+}
+.stz-graph-retention-table .col-date {
+  padding:5px 10px 5px 5px;
+  text-align: left;
+}
+.stz-graph-retention-table .rtt-value {
+  padding: 15px 18px 15px 18px;
+  background: #fff;
+  color: white;
+  font-size: 13px;
+  font-weight: 300;
+}
+.stz-graph-retention-table .blue-5 {
+  color: white;
+  font-weight: 100;
+  background: #2f5ec4;
+  border-bottom: 2px solid #eee;
+  border-right: 1px solid #fff;
+}
+.stz-graph-retention-table .blue-4 {
+  color: white;
+  font-weight: 100;
+  background: #4285f4;
+  border-bottom: 2px solid #eee;
+  border-right: 1px solid #fff;
+}
+.stz-graph-retention-table .blue-3 {
+  background: #45a5f5;
+  border-bottom: 2px solid #eee;
+  border-right: 1px solid #fff;
+}
+.stz-graph-retention-table .blue-2 {
+  color: black;
+  background: #93d5ed;
+  border-bottom: 2px solid #eee;
+  border-right: 1px solid #fff;
+}
+.stz-graph-retention-table .blue-1 {
+  color: black;
+  background: #dcf7fa;
+  border-bottom: 2px solid #eee;
+  border-right: 1px solid #fff;
+}
+.stz-graph-retention-table .blue-0 {
+  color: black;
+  background: #f6ffff;
+  border-bottom: 2px solid #eee;
+  border-right: 1px solid #fff;
+}
