@@ -128,7 +128,7 @@
 
     function setChartData(chart) {
         traverseObject($('#chart-data').find('input,textarea,select'), function(object) {
-            if(chart[object.name]) {
+            if(chart.hasOwnProperty(object.name)) {
                 if('options' === object.name) {
                     $(object).val(JSON.stringify(chart[object.name]));
                 } else {
