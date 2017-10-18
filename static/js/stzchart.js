@@ -48,7 +48,7 @@ sundaytoz.chart.RetentionTable = class RetentionTable {
 				} else if(rtt > 0) {
 					data_class = 'blue-0';
 				}
-				td_list.push('<td class="col-data '+data_class+'" tootip="'+row[i].value+'">'+ data_str +'</td>');
+				td_list.push('<td class="col-data '+data_class+'" title="'+row[i].value+'">'+ data_str +'</td>');
 			}
 			tr_list.push(tr.replace('{td-list}', td_list.join('')));
 		});
