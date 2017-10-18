@@ -20,6 +20,7 @@
 }
 .stz-graph-retention-table .col-data {
   text-align: center;
+  padding: 5px;
 }
 .stz-graph-retention-table .col-date {
   padding:5px 10px 5px 5px;
