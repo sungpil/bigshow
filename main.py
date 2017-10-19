@@ -61,14 +61,17 @@ def charts_update(chart_id):
 
 @app.route('/charts/<int:chart_id>', methods=['GET'])
 def charts_get(chart_id):
-    return json.dumps(ChartManager().get_result(chart_id))
+    force = request.args.get('force', default='false', type=str)
+    status, results, error = ChartManager().get_result(chart_id, (force.lower() == 'false'))
+    return json.dumps({'status':status, 'results':results, 'error':error})
 
 
 @app.route('/charts/<string:chart_ids>', methods=['GET'])
 def charts_mget(chart_ids):
     result = {}
     for chart_id in chart_ids.split(','):
-        result[chart_id] = ChartManager().get_result(chart_id)
+        status, results, error = ChartManager().get_result(chart_id)
+        result[chart_id] = {'status':status, 'results':results, 'error':error}
     return json.dumps(result)
 
 

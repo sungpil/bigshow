@@ -17,12 +17,21 @@ class JobManager(metaclass=Singleton):
     def get_result(self, job_name):
         Logger.debug("get_result: job_name={job_name}".format(job_name=job_name))
         savedJob = self.__get(job_name)
-        if None != savedJob and 'DONE' == savedJob.state:
-            Logger.debug("state={state} ended={ended}".format(state=savedJob.state,ended=savedJob.ended))
-            result = savedJob.result()
-            if result:
-                return result.fetch_data()
-        return None
+        if None == savedJob:
+            return 'DONE', None, {'message':'Invalid Job'}
+        if 'DONE' == savedJob.state:
+            if not savedJob.error_result:
+                Logger.debug("state={state} ended={ended}".format(state=savedJob.state,ended=savedJob.ended))
+                result = savedJob.result()
+                if result:
+                    return 'DONE', result.fetch_data(), None
+                else:
+                    return 'DONE', None, {'message':'Result not exists'}
+            else:
+                Logger.debug("state={state} error={error}".format(state=savedJob.state, error=savedJob.error_result))
+                return 'DONE', None, savedJob.error_result
+        else:
+            return savedJob.state, None, None
 
     def query(self, query, job_name):
         Logger.debug("query: job_name={job_name}".format(job_name=job_name))

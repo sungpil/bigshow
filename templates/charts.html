@@ -46,25 +46,38 @@
       }
     }
 
-    function getData(chart, card) {
+    function retry(target) {
+      var card = $(target).closest('.card-wrapper');
+      var chart_id = $(card).attr('chart-id');
+      getData(getChartById(chart_id), card, true);
+      drawError(card.find('#chart').get(0), null);
+    }
+
+    function getData(chart, card, force_update=false) {
       if(chart['timer_id']) {
         clearTimeout(chart['timer_id']);
         chart['timer_id'] = null;
       }
+      card.find('#btn-retry').hide();
       $.ajax({
-        url: "/charts/"+chart['id'],
+        url: "/charts/"+chart['id']+'?force='+force_update,
         method: 'GET',
         contentType: "application/json; charset=utf-8",
         dataType: 'json',
         success: function(data) {
           console.log(data);
-          if(data) {
+          if('DONE' == data.status) {
             if(chart['timer_id']) {
               clearTimeout(chart['timer_id']);
               chart['timer_id'] = null;
             }
-            chart['data'] = data;
-            drawGraph(card.find('#chart').get(0), chart);
+            if(!data.error) {
+              chart['data'] = data.results;
+              drawGraph(card.find('#chart').get(0), chart);
+            } else {
+              card.find('#btn-retry').show();
+              drawError(card.find('#chart').get(0), data.error)
+            }
           } else {
             if(!chart['timer_id']) {
               chart['timer_id'] = setTimeout(getData, 5000, chart, card);
@@ -109,6 +122,13 @@
           json_data = [chart.header].concat(chart.data);
         }
         container.draw(json_data, google.charts.Line.convertOptions(chart.options));
+      }
+    }
+
+    function drawError(graph, error) {
+      $(graph).empty();
+      if(error) {
+        $(graph).append(JSON.stringify(error));
       }
     }
 
@@ -247,6 +267,7 @@
             <option value="table">table</option>
             <option value="table_rtt">table_rtt</option>
           </select>
+          <a class="btn btn-default" id="btn-retry" style="display:none;" href="javascript:;" onclick="retry(this);">retry</a>
         </h6>
         <div class="chart" id="chart">
         </div>
