@@ -23,18 +23,20 @@ class ChartManager(metaclass=Singleton):
         Logger().debug("get_result: chart_id={chart_id}, from_cache={from_cache}".format(chart_id=chart_id, from_cache=from_cache))
         status_key = "last_job:{chart_id}".format(chart_id=chart_id)
         error = None
+        results = None
         if from_cache:
             last_job_id = Cache().get(status_key)
             results = Cache().get(last_job_id)
         else:
-            last_job_id = "chart-{chart_id}-{time}".format(chart_id=chart_id, time=int(time.time()))
-            results = None
+            last_job_id = self._get_job_id(chart_id)
         Logger.debug("get_result: status_key={status_key}, last_job_id={last_job_id}".format(status_key=status_key, last_job_id=last_job_id))
         if not results:
             Logger.debug("from BIGQUERY")
-            if JobManager().exists(last_job_id):
+            if last_job_id and JobManager().exists(last_job_id):
                 status, results, error = JobManager().get_result(last_job_id)
             else:
+                if not last_job_id:
+                    last_job_id = self._get_job_id(chart_id)
                 chart = Chart().get(chart_id,['chart_type, query'])
                 query = self.get_query(chart['chart_type'], chart['query'])
                 JobManager().query_async(query, last_job_id)
@@ -68,3 +70,6 @@ class ChartManager(metaclass=Singleton):
             return CustomQuery().retention(start_date, end_date, range)
         else:
             return None
+
+    def _get_job_id(self, chart_id):
+        return "chart-{chart_id}-{time}".format(chart_id=chart_id, time=int(time.time()))

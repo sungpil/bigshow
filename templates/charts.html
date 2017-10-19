@@ -46,7 +46,7 @@
       }
     }
 
-    function retry(target) {
+    function reload(target) {
       var card = $(target).closest('.card-wrapper');
       var chart_id = $(card).attr('chart-id');
       getData(getChartById(chart_id), card, true);
@@ -58,7 +58,8 @@
         clearTimeout(chart['timer_id']);
         chart['timer_id'] = null;
       }
-      card.find('#btn-retry').hide();
+      card.find('#icon-error').hide();
+      card.find('#img-loading').show();
       $.ajax({
         url: "/charts/"+chart['id']+'?force='+force_update,
         method: 'GET',
@@ -67,6 +68,7 @@
         success: function(data) {
           console.log(data);
           if('DONE' == data.status) {
+            card.find('#img-loading').hide();
             if(chart['timer_id']) {
               clearTimeout(chart['timer_id']);
               chart['timer_id'] = null;
@@ -75,7 +77,7 @@
               chart['data'] = data.results;
               drawGraph(card.find('#chart').get(0), chart);
             } else {
-              card.find('#btn-retry').show();
+              card.find('#icon-error').show();
               drawError(card.find('#chart').get(0), data.error)
             }
           } else {
@@ -86,6 +88,8 @@
         },
         error: function(error) {
           console.log(error);
+          card.find('#img-loading').hide();
+          card.find('#icon-error').show();
           if(!chart['timer_id']) {
             chart['timer_id'] = setTimeout(getData, 5000, chart, card);
           }
@@ -243,6 +247,7 @@
             <div class="dropdown-menu">
               <a class="dropdown-item" href="#">CSV</a>
               <a class="dropdown-item" href="javascript:;" onclick="editCard(this);">Edit</a>
+              <a class="dropdown-item" href="javascript:;" onclick="reload(this);">Reload</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="javascript:;" onclick="deleteCard(this);">Delete</a>
             </div>
@@ -267,7 +272,8 @@
             <option value="table">table</option>
             <option value="table_rtt">table_rtt</option>
           </select>
-          <a class="btn btn-default" id="btn-retry" style="display:none;" href="javascript:;" onclick="retry(this);">retry</a>
+          <i class="material-icons icon-error" id="icon-error" style="display:none;">&#xE002;</i>
+          <img id="img-loading" src="{{ url_for('static',filename='images/800.gif') }}" style="display:none;">
         </h6>
         <div class="chart" id="chart">
         </div>

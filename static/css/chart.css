@@ -1,12 +1,16 @@
 .row {
     padding: 5px;
 }
-.card-title .btn {
+.card-title .icon-error {
     float: right;
-    color: #666;
-    background-color: white;
-    border-color: #ccc;
-    font-size: 12px;
-    padding: 2px 4px 2px 4px;
+    color: red;
+    font-size: 20px;
     margin-left: 10px;
+}
+
+.card-title img {
+    float: right;
+    max-height: 5px;
+    width: auto;
+    margin-top: 8px;
 }
