@@ -88,6 +88,7 @@
         },
         error: function(error) {
           console.log(error);
+          drawError(card.find('#chart').get(0), data.error);
           card.find('#img-loading').hide();
           card.find('#icon-error').show();
           if(!chart['timer_id']) {
@@ -110,7 +111,7 @@
     function drawGraph(graph, chart) {
       if(chart.data) {
         $(graph).empty();
-        var container = null;
+        var container, json_data = null;
         if('bar' == chart.type) {
           container = new google.charts.Bar(graph);
           json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));

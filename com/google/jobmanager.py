@@ -41,8 +41,11 @@ class JobManager(metaclass=Singleton):
             retry_count -= 1
             time.sleep(10)
             job.reload()
-        results = job.result()
-        return results.fetch_data()
+        if job.error_result:
+            return None, job.error_result
+        else:
+            results = job.result()
+            return results.fetch_data(), None
 
     def query_async(self, query, job_name):
         Logger.debug("query_async: job_name={job_name}".format(job_name=job_name))

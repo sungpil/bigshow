@@ -102,10 +102,33 @@
 <div class="card-wrapper" id="card-dummy" style="display:none;" >
   <div class="card">
     <div class="card-body">
-      <h6 id="title" class="card-title"></h6>
+      <h6 id="title" class="card-title">
+          <select name="chart-width" onchange="changeCardWidth(this);">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+          </select>
+          <select name="chart-type" onchange="changeCardType(this);">
+            <option value="line">line</option>
+            <option value="bar">bar</option>
+            <option value="table">table</option>
+            <option value="table_rtt">table_rtt</option>
+          </select>
+          <i class="material-icons icon-error" id="icon-error" style="display:none;">&#xE002;</i>
+          <img id="img-loading" src="{{ url_for('static',filename='images/800.gif') }}" style="display:none;">
+      </h6>
       <div id="chart"></div>
         <div class="text-right chart-button-group">
-          <button type="button" class="btn btn-primary" id="btn_add">ADD</button>
+          <button type="button" class="btn btn-primary" id="btn_add" style="display:none;">ADD</button>
         </div>
     </div>
   </div>
@@ -115,6 +138,7 @@
     google.charts.load('current', {'packages':['line','bar','table']});
 
     var charts = {{ '[]' if not charts else charts }};
+    var selected_chart = null;
 
     $(window).ready(function() {
         var selected_chart_id = {{ 0 if not selected_chart_id else selected_chart_id }};
@@ -207,12 +231,16 @@
     });
 
     $('#btn_run').on('click', function(e) {
+        $('#result').empty();
         disable($('#btn_update'));
         disable($('#btn_run'));
         var chart = objectifyForm($('#chart-data').serializeArray());
         chart.header = chart.header.split(',');
         chart.options = JSON.parse(chart.options);
+        var card = addCard(chart, $('#result'));
+        selected_chart = chart;
         console.log("run chart="+chart);
+        card.find('#img-loading').show();
         $.ajax({
             url: "/chartbuilder",
             method: 'POST',
@@ -221,17 +249,25 @@
             data: JSON.stringify({query:chart.query,chart_type:chart.chart_type}),
             success: function(data) {
                 console.log("success data="+data);
-                if(data) {
-                    chart['data'] = data;
-                    $('#result').empty();
-                    addCard(chart, $('#result'));
+                card.find('#img-loading').hide();
+                if(!data.error) {
+                    chart['data'] = data.results;
+                    chart.options.width = card.find('#chart').width();
+                    drawGraph(card.find('#chart').get(0), chart);
+                    card.find('#btn_add').show();
                     addChartListener();
+                } else {
+                    card.find('#icon-error').show();
+                    drawError(card.find('#chart').get(0), data.error);
                 }
                 enable($('#btn_update'));
                 enable($('#btn_run'));
             },
             error: function(error) {
                 console.log("error data="+error);
+                drawError(card.find('#chart').get(0), data.error);
+                card.find('#img-loading').hide();
+                card.find('#icon-error').show();
                 enable($('#btn_update'));
                 enable($('#btn_run'));
             }
@@ -249,31 +285,77 @@
     function addCard(chart, row) {
       //console.log(chart);
       // make card
-      var card = $('#card-dummy').clone();
-      card.attr('id',"chart-"+chart.title);
-      card.css('display','');
-      card.addClass('col-'+chart.width);
-      card.find('#title').append(chart.title);
+      var card = makeCard(chart);
       row.append(card);
-      chart.options.width = card.find('#chart').width();
+      if('table' === chart.type) {
+        chart.options.width = '100%';
+      } else {
+        chart.options.width = card.find('#chart').width();
+      }
+      card.find('.card').height(card.find('.card').height()+chart.options.height+32);
+      // select options
+      card.find('select[name=chart-type]').val(chart.type);
+      card.find('select[name=chart-width]').val(chart.width);
+      return card;
+    }
+
+    function drawError(graph, error) {
+      $(graph).empty();
+      if(error) {
+        $(graph).append(JSON.stringify(error));
+      }
+    }
+
+    function drawGraph(graph, chart) {
+      $(graph).empty();
       // draw chart
-      var container = null;
-      var json_data = null;
+      var container, json_data = null;
       if('bar' == chart.type) {
-        container = new google.charts.Bar(card.find('#chart').get(0));
+        container = new google.charts.Bar(graph);
         json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
       } else if('line' == chart.type) {
-        container = new google.charts.Line(card.find('#chart').get(0));
+        container = new google.charts.Line(graph);
         json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
       } else if('table' == chart.type) {
         chart.options.width = '100%';
-        container = new google.visualization.Table(card.find('#chart').get(0));
+        container = new google.visualization.Table(graph);
         json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
       } else if('table_rtt' == chart.type) {
-        container = new sundaytoz.chart.RetentionTable(card.find('#chart').get(0));
+        container = new sundaytoz.chart.RetentionTable(graph);
         json_data = [chart.header].concat(chart.data);
       }
       container.draw(json_data, google.charts.Line.convertOptions(chart.options));
+    }
+
+    function makeCard(chart) {
+      var card = $('#card-dummy').clone();
+      card.attr('id',"chart-"+chart.id);
+      card.attr('chart-id',chart.id);
+      card.find('#title').append(chart.title);
+      card.addClass('col-lg-'+chart.width);
+      card.css('display','');
+      return card;
+    }
+
+    function changeCardType(target) {
+      var wrapper = $(target).closest('.card-wrapper');
+      if(selected_chart) {
+        selected_chart.type = $(target).val();
+        drawGraph($(wrapper).find('#chart').get(0), selected_chart);
+      }
+    }
+
+    function changeCardWidth(target) {
+      var wrapper = $(target).closest('.card-wrapper');
+      if(selected_chart) {
+        var width = $(target).val();
+        $(wrapper).removeClass('col-lg-'+selected_chart.width).addClass('col-lg-'+width);
+        selected_chart.width = width;
+        if('table' != selected_chart.type) {
+          selected_chart.options.width = $(wrapper).find('#chart').width();
+        }
+        drawGraph($(wrapper).find('#chart').get(0), selected_chart);
+      }
     }
 </script>
 {% endautoescape %}

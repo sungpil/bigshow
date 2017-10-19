@@ -26,7 +26,8 @@ class ChartManager(metaclass=Singleton):
         results = None
         if from_cache:
             last_job_id = Cache().get(status_key)
-            results = Cache().get(last_job_id)
+            if last_job_id:
+                results = Cache().get(last_job_id)
         else:
             last_job_id = self._get_job_id(chart_id)
         Logger.debug("get_result: status_key={status_key}, last_job_id={last_job_id}".format(status_key=status_key, last_job_id=last_job_id))
