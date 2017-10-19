@@ -246,7 +246,7 @@
             method: 'POST',
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
-            data: JSON.stringify({query:chart.query,chart_type:chart.chart_type}),
+            data: JSON.stringify({query:chart.query,chart_type:chart.chart_type,chart_id:'tmp'}),
             success: function(data) {
                 console.log("success data="+data);
                 card.find('#img-loading').hide();

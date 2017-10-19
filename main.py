@@ -85,10 +85,8 @@ def chartbuilder(chart_id):
 def chartbuilder_query():
     chart_type = request.json['chart_type']
     query = request.json['query']
-    job_name = 'chart-tmp-{time}'.format(time=int(time.time()))
-    results, error = JobManager().query(query=ChartManager().get_query(chart_type, query), job_name=job_name)
-    if results:
-        results = list(map(lambda x: list(x), results))
+    chart_id = request.json['chart_id']
+    results, error = ChartManager().query(chart_id=chart_id, chart_type=chart_type, query=ChartManager().get_query(chart_type, query))
     return json.dumps({'results':results,'error':error})
 
 

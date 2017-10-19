@@ -41,11 +41,7 @@ class JobManager(metaclass=Singleton):
             retry_count -= 1
             time.sleep(10)
             job.reload()
-        if job.error_result:
-            return None, job.error_result
-        else:
-            results = job.result()
-            return results.fetch_data(), None
+        return job
 
     def query_async(self, query, job_name):
         Logger.debug("query_async: job_name={job_name}".format(job_name=job_name))
@@ -57,6 +53,8 @@ class JobManager(metaclass=Singleton):
         return job
 
     def exists(self, job_name):
+        if not job_name:
+            return False
         job = self.__get(job_name)
         Logger.error("exists job={job}".format(job=job))
         return job and job.exists()
