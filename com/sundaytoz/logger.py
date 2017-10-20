@@ -1,5 +1,6 @@
 import inspect
 
+
 class Logger(object):
 
     DEBUG = 1
@@ -11,7 +12,7 @@ class Logger(object):
     _level_ = 1
 
     @classmethod
-    def setLevel(cls, level):
+    def set_level(cls, level):
         cls._level_ = level
 
     @classmethod
@@ -24,7 +25,7 @@ class Logger(object):
             return
         if not caller:
             caller = cls.__get_class_name()
-        print("{level_tag}/{caller}: {msg}".format(level_tag = level_tag, caller=caller, msg = msg))
+        print("{level_tag}/{caller}: {msg}".format(level_tag=level_tag, caller=caller, msg=msg))
 
     @classmethod
     def debug(cls, msg):

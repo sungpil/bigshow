@@ -1,0 +1,3 @@
+BIGQUERY = 0
+LIVY = 1
+DB = 2

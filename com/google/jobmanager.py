@@ -2,12 +2,15 @@ from google.cloud import bigquery
 import time
 from com.sundaytoz.logger import Logger
 
+
 class Singleton(type):
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
+
 
 class JobManager(metaclass=Singleton):
     pass
@@ -16,22 +19,22 @@ class JobManager(metaclass=Singleton):
 
     def get_result(self, job_name):
         Logger.debug("get_result: job_name={job_name}".format(job_name=job_name))
-        savedJob = self.__get(job_name)
-        if None == savedJob:
-            return 'DONE', None, {'message':'Invalid Job'}
-        if 'DONE' == savedJob.state:
-            if not savedJob.error_result:
-                Logger.debug("state={state} ended={ended}".format(state=savedJob.state,ended=savedJob.ended))
-                result = savedJob.result()
+        saved_job = self.__get(job_name)
+        if None is saved_job:
+            return 'DONE', None, {'message': 'Invalid Job'}
+        if 'DONE' == saved_job.state:
+            if not saved_job.error_result:
+                Logger.debug("state={state} ended={ended}".format(state=saved_job.state, ended=saved_job.ended))
+                result = saved_job.result()
                 if result:
                     return 'DONE', result.fetch_data(), None
                 else:
-                    return 'DONE', None, {'message':'Result not exists'}
+                    return 'DONE', None, {'message': 'Result not exists'}
             else:
-                Logger.debug("state={state} error={error}".format(state=savedJob.state, error=savedJob.error_result))
-                return 'DONE', None, savedJob.error_result
+                Logger.debug("state={state} error={error}".format(state=saved_job.state, error=saved_job.error_result))
+                return 'DONE', None, saved_job.error_result
         else:
-            return savedJob.state, None, None
+            return saved_job.state, None, None
 
     def query(self, query, job_name):
         Logger.debug("query: job_name={job_name}".format(job_name=job_name))
@@ -62,8 +65,8 @@ class JobManager(metaclass=Singleton):
     def __get(self, job_name):
         Logger.debug("__get: job_name={job_name}".format(job_name=job_name))
         try:
-            job = self.__getClient().get_job(job_name)
-        except :
+            job = self.__get_client().get_job(job_name)
+        except:
             import sys
             Logger.error("__get.except {error_msg}".format(error_msg=sys.exc_info()[0]))
             job = None
@@ -71,9 +74,9 @@ class JobManager(metaclass=Singleton):
 
     def __create(self, job_name, query):
         Logger.debug("__create: job_name={job_name}".format(job_name=job_name))
-        return self.__getClient().run_async_query(job_name, query)
+        return self.__get_client().run_async_query(job_name, query)
 
-    def __getClient(self):
+    def __get_client(self):
         if not self.__client:
             from config.dev import config
             self.__client = bigquery.Client(project=config['bigquery']['project_id'])

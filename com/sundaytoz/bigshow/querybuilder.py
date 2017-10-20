@@ -1,18 +1,28 @@
 import datetime
+import json
 from com.sundaytoz.logger import Logger
+from com.sundaytoz.bigshow import QUERY_TYPE
 from config.dev import config
 
-class Singleton(type):
-    _instances = {}
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
 
-class CustomQuery(metaclass=Singleton):
+class QueryBuilder:
     pass
 
-    def retention(self, start_date, end_date, interval):
+    @staticmethod
+    def get_query(query_type, query):
+        Logger().debug("get_query: query_type={query_type}".format(query_type=query_type))
+        if QUERY_TYPE.CUSTOM == int(query_type):
+            option = json.loads(query)
+            date_range = option['range']
+            interval = option['interval']
+            end_date = datetime.datetime.now() - datetime.timedelta(days=1)
+            start_date = end_date - datetime.timedelta(days=interval)
+            return QueryBuilder.retention(start_date, end_date, date_range)
+        else:
+            return query
+
+    @staticmethod
+    def retention(start_date, end_date, interval):
         project_id = config['bigquery']['project_id']
         dataset_nru = "{0}.{1}".format(project_id, config['bigquery']['dataset']['nru'])
         dataset_dau = "{0}.{1}".format(project_id, config['bigquery']['dataset']['dau'])
@@ -26,6 +36,7 @@ class CustomQuery(metaclass=Singleton):
         while start_date <= end_date:
             target_date_list = [start_date + datetime.timedelta(days=x) for x in range(0, interval)]
             cnt = 0
+            date_str = None
             query_list = ["'{0}' dt".format(start_date.strftime('%y%m%d'))]
             for target_date in target_date_list:
                 if target_date <= today:
@@ -36,7 +47,7 @@ class CustomQuery(metaclass=Singleton):
                         query_list.append("(SELECT count(*) FROM `{0}.{1}` t1 inner join `{2}.{3}` t2 ON t1.resettable_device_id = t2.resettable_device_id) r{4}".format(dataset_nru, date_str, dataset_dau, target_date.strftime('%y%m%d'), cnt))
                 else:
                     query_list.append("0 r{0}".format(cnt))
-                cnt = cnt+1
+                cnt += 1
             if query_list:
                 unions.append("(SELECT {0})".format(','.join(query_list)))
             start_date = start_date + datetime.timedelta(days=1)

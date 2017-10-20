@@ -1,12 +1,15 @@
 from com.sundaytoz.logger import Logger
 import pymysql.cursors
 
+
 class Singleton(type):
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
+
 
 class Admin(metaclass=Singleton):
     pass
@@ -15,7 +18,7 @@ class Admin(metaclass=Singleton):
 
     def get(self, email):
         Logger.info("get: email={email}".format(email=email))
-        connection = self.__getDB()
+        connection = self.__get_db()
         try:
             with connection.cursor() as cursor:
                 sql = "SELECT idx, email, name, lv, dept, permission, time_register FROM usr WHERE email=%s"
@@ -26,7 +29,7 @@ class Admin(metaclass=Singleton):
             connection.close()
         return row
 
-    def __getDB(self):
+    def __get_db(self):
         if not self.__db:
             from config.dev import config
             Logger.debug("__getDB: config=" + str(config))
