@@ -53,7 +53,7 @@ class ChartManager:
                 return 'DONE', last_job_result['result'], last_job_result['error']
             else:
                 adapter = ChartManager.get_adapter(last_job['type'])
-                if not adapter.exists(last_job_id):
+                if not adapter.exists(job_id=last_job_id):
                     chart = Chart().get(chart_id, ['chart_type,query_type,query'])
                     new_job = {'id': last_job_id, 'type': chart['chart_type']}
                     adapter = ChartManager.get_adapter(new_job['type'])
