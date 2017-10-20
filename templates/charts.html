@@ -2,6 +2,7 @@
 {% block body %}
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script type="text/javascript" src="{{ url_for('static',filename='js/stzchart.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static',filename='js/util.js') }}"></script>
   <link rel="stylesheet" href="{{ url_for('static',filename='css/card.css') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/chart.css') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/googlechart.css') }}">
@@ -207,6 +208,15 @@
       }
     }
 
+    function exportFile(target, format="csv") {
+      var wrapper = $(target).closest('.card-wrapper');
+      var chart_id = $(wrapper).attr('chart-id');
+      var chart = getChartById(chart_id);
+      exportToCsv(
+        '{file-name}.csv'.replace('{file-name}', chart.title),
+        [chart.header].concat(chart.data));
+    }
+
     function getChartById(chart_id) {
       for( var idx in charts ) {
         if(chart_id == charts[idx].id) {
@@ -246,7 +256,7 @@
               <i class="material-icons btn-more">more_vert</i>
             </a>
             <div class="dropdown-menu">
-              <a class="dropdown-item" href="#">CSV</a>
+              <a class="dropdown-item" href="javascript:;" onclick="exportFile(this);">CSV</a>
               <a class="dropdown-item" href="javascript:;" onclick="editCard(this);">Edit</a>
               <a class="dropdown-item" href="javascript:;" onclick="reload(this);">Reload</a>
               <div class="dropdown-divider"></div>
