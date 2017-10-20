@@ -25,7 +25,7 @@ def oauth2callback():
         session['user'] = {'id':user['idx'],'time':time.time()}
         return redirect('/')
     else:
-        return redirect(url_for('oauth2.fail'))
+        return redirect(url_for('gmail_auth.fail'))
 
 @gmail_auth.route('/oauth2/fail')
 def fail():
