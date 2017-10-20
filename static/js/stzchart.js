@@ -5,8 +5,8 @@ sundaytoz.chart.RetentionTable = class RetentionTable {
 		this._parent = container;
 	}
 	draw(data, option) {
-		console.log(this._parent);
-		console.log(data);
+		//console.log(this._parent);
+		//console.log(data);
 		var table_tpl = '<div class="stz-graph-retention" style="width:100%; height:{height}; overflow:auto"><table class="stz-graph-retention-table">{header}{header-avg}{data-rows}</table></div>';
 		var height = (option.height.toString().includes('%')) ? option.height : option.height + 'px';
 		var header = this.makeHeader(data.shift());

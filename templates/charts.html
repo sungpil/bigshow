@@ -62,7 +62,7 @@
       card.find('#icon-error').hide();
       card.find('#img-loading').show();
       $.ajax({
-        url: "/charts/"+chart['id']+'?force='+force_update,
+        url: "/charts/"+chart['id']+'/result?force='+force_update,
         method: 'GET',
         contentType: "application/json; charset=utf-8",
         dataType: 'json',

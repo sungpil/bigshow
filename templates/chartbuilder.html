@@ -31,16 +31,17 @@
                         </div>
                     </div>
                     <div class="form-row align-items-center">
-                        <label class="col-sm-1 col-form-label">ChartType</label>
+                        <label class="col-sm-1 col-form-label">Data</label>
                         <div class="col-sm-11">
                             <select class="form-control" name="chart_type">
-                                <option selected value="0">bigquery</option>
-                                <option value="1">custom</option>
+                                <option selected value="0">Bigquery</option>
+                                <option value="1">Livy</option>
+                                <option value="2">DB</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-row align-items-center">
-                        <label class="col-sm-1 col-form-label">Type</label>
+                        <label class="col-sm-1 col-form-label">Graph</label>
                         <div class="col-sm-11">
                             <select class="form-control" name="type">
                                 <option selected value="line">line</option>
@@ -78,6 +79,15 @@
                                 <option value="10">10</option>
                                 <option value="11">11</option>
                                 <option value="12">12</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">Query      Type</label>
+                        <div class="col-sm-11">
+                            <select class="form-control" name="query_type">
+                                <option selected value="0">normal</option>
+                                <option value="1">custom</option>
                             </select>
                         </div>
                     </div>
@@ -242,11 +252,11 @@
         console.log("run chart="+chart);
         card.find('#img-loading').show();
         $.ajax({
-            url: "/chartbuilder",
+            url: "/charts/queries",
             method: 'POST',
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
-            data: JSON.stringify({query:chart.query,chart_type:chart.chart_type,chart_id:'tmp'}),
+            data: JSON.stringify({query:chart.query,chart_type:chart.chart_type,query_type:chart.query_type,chart_id:'tmp'}),
             success: function(data) {
                 console.log("success data="+data);
                 card.find('#img-loading').hide();
