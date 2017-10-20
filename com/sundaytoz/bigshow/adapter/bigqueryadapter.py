@@ -7,16 +7,16 @@ class BigQueryAdapter(DataAdapter):
     pass
 
     @staticmethod
-    def exists(chart_id):
-        Logger().debug("exists: chart_id={chart_id}".format(chart_id=chart_id))
-        return JobManager().exists(job_name=chart_id)
+    def exists(job_id):
+        Logger().debug("exists: job_id={job_id}".format(job_id=job_id))
+        return JobManager().exists(job_name=job_id)
 
     @staticmethod
-    def query(chart_id, query):
-        Logger().debug("query: chart_id={chart_id}".format(chart_id=chart_id))
+    def query(job_id, query):
+        Logger().debug("query: job_id={job_id}".format(job_id=job_id))
         data = None
         error = None
-        job = JobManager().query(query=query, job_name=chart_id)
+        job = JobManager().query(query=query, job_name=job_id)
         if job.error_result:
             error = job.error_result
         else:
@@ -26,14 +26,14 @@ class BigQueryAdapter(DataAdapter):
         return data, error
 
     @staticmethod
-    def query_async(chart_id, query):
-        Logger().debug("query_async: chart_id={chart_id}".format(chart_id=chart_id))
-        return JobManager().query_async(query=query, job_name=chart_id)
+    def query_async(job_id, query):
+        Logger().debug("query_async: job_id={job_id}".format(job_id=job_id))
+        return JobManager().query_async(query=query, job_name=job_id)
 
     @staticmethod
-    def get_result(chart_id):
-        Logger().debug("get_result: chart_id={chart_id}".format(chart_id=chart_id))
-        status, results, error = JobManager().get_result(chart_id)
+    def get_result(job_id):
+        Logger().debug("get_result: job_id={job_id}".format(job_id=job_id))
+        status, results, error = JobManager().get_result(job_id)
         if 'DONE' == status and results:
             results = list(map(lambda x: list(x), results))
         return status, results, error
