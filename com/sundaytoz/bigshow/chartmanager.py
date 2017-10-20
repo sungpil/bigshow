@@ -26,7 +26,7 @@ class ChartManager:
         if not adapter:
             return None, '{"message":"fail to find adapter}'
         else:
-            return adapter.query(chart_id=ChartManager.get_job_id(chart_id), query=QueryBuilder.get_query(query_type=query_type, query=query))
+            return adapter.query(job_id=ChartManager.get_job_id(chart_id), query=QueryBuilder.get_query(query_type=query_type, query=query))
 
     @staticmethod
     def get_result(chart_id, from_cache=True):
@@ -41,7 +41,7 @@ class ChartManager:
             chart = Chart().get(chart_id, ['chart_type,query_type,query'])
             new_job = {'id': ChartManager.get_job_id(chart_id), 'type': chart['chart_type']}
             adapter = ChartManager.get_adapter(chart_type=chart['chart_type'])
-            adapter.query_async(new_job['id'], QueryBuilder.get_query(chart['query_type'], chart['query']))
+            adapter.query_async(job_id=new_job['id'], query=QueryBuilder.get_query(chart['query_type'], chart['query']))
             Cache().set(last_job_key, new_job)
             return 'RUNNING', None, None
         else:
@@ -57,7 +57,7 @@ class ChartManager:
                     chart = Chart().get(chart_id, ['chart_type,query_type,query'])
                     new_job = {'id': last_job_id, 'type': chart['chart_type']}
                     adapter = ChartManager.get_adapter(new_job['type'])
-                    adapter.query_async(new_job['id'], QueryBuilder.get_query(chart['query_type'], chart['query']))
+                    adapter.query_async(job_id=new_job['id'], query=QueryBuilder.get_query(chart['query_type'], chart['query']))
                     Cache().set(last_job_key, new_job)
                     return 'RUNNING', None, None
                 else:
