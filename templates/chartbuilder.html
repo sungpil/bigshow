@@ -265,7 +265,7 @@
             },
             error: function(error) {
                 console.log("error data="+error);
-                drawError(card.find('#chart').get(0), data.error);
+                drawError(card.find('#chart').get(0), error);
                 card.find('#img-loading').hide();
                 card.find('#icon-error').show();
                 enable($('#btn_update'));
