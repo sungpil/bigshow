@@ -159,7 +159,9 @@
         var selected_chart_id = {{ 0 if not selected_chart_id else selected_chart_id }};
         if(selected_chart_id) {
             $('#select-chart').val(selected_chart_id);
-            setChartData(getChartById(selected_chart_id));
+            var chart = getChartById(selected_chart_id);
+            $('#select-note').val(chart['note']);
+            setChartData(chart);
         }
     });
 
