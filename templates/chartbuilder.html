@@ -20,6 +20,11 @@
                             <option value="{{ chart['id'] }}">({{ chart['id'] }}) {{ chart['title'] }}</option>
                             {% endfor %}
                         </select>
+                        <select class="custom-select" id="select-note">
+                            {% for note in notes %}
+                            <option value="{{ note['id'] }}">{{ note['title'] }}</option>
+                            {% endfor %}
+                        </select>
                     </small>
                 </div>
                 <form id="chart-data">
@@ -204,6 +209,7 @@
           disable($('#btn_add'));
           var chart = objectifyForm($('#chart-data').serializeArray());
           chart.header = chart.header.split(',');
+          chart.note = $('#select-note').val();
           console.log("add chart="+chart);
           $.ajax({
               url: "/charts",

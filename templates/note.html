@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% block body %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/note.css') }}">
+<div class="row" id="row-note-header">
+    <button class="btn btn-white dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        {{ selected_note['title'] if selected_note else '' }}
+    </button>
+    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        {% for note in notes %}
+        <a class="dropdown-item" href="/dashboard/{{ note['id'] }}">{{ note['title'] }}</a>
+        {% endfor %}
+        <a class="dropdown-item" href="javasript:;" onclick="show_add_note()"><button class="btn btn-default">+</button></a>
+    </div>
+</div>
+<script>
+    function show_add_note() {
+        $('#modal-note-add #new-note-title').val('');
+        $('#modal-note-add').modal('show');
+    }
+    function add_note() {
+        $('#modal-note-add').modal('hide');
+        var new_note_title = $('#modal-note-add #new-note-title').val();
+        console.log("add new note title:"+new_note_title);
+        $.ajax({
+            url: "/notes",
+            method: 'POST',
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            data: JSON.stringify({title:new_note_title}),
+            success: function(data) {
+                console.log(data);
+                var newItem = '<a class="dropdown-item" href="/dashboard/{note-id}">{note-title}</a>'.replace('{note-id}',data.id).replace('{note-title}',data.title);
+                $('#row-note-header .dropdown-menu .dropdown-item:last').before(newItem);
+            },
+            error: function(error) {
+                console.log(JSON.stringify(error));
+            }
+        });
+    }
+</script>
+{% block charts %}{% endblock %}
+<div class="modal fade" id="modal-note-add" tabindex="-1" role="dialog" aria-labelledby="model-note-add-label" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="model-note-add-label">New Note</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="form-group">
+            <label for="new-note-title" class="col-form-label">Title</label>
+            <input type="text" class="form-control" id="new-note-title">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <a class="btn btn-primary" href="javascript:;" onclick="add_note(this)">Add</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

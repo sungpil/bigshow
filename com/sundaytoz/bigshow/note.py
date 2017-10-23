@@ -47,8 +47,9 @@ class Note(metaclass=Singleton):
             with connection.cursor() as cursor:
                 sql = "INSERT INTO notes(title, created) VALUES(%s, now())"
                 cursor.execute(sql, (title,))
+                insert_id = connection.insert_id()
             connection.commit()
-            return connection.insert_id()
+            return insert_id
         finally:
             connection.close()
 

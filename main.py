@@ -30,11 +30,25 @@ def before():
 
 
 @app.route('/', methods=['GET'])
-def chart_view():
-    charts = Chart().get_all()
+@app.route('/dashboard', methods=['GET'], defaults={'note_id':None})
+@app.route('/dashboard/<int:note_id>', methods=['GET'])
+def chart_view(note_id):
+
+    notes = Note().get_all()
+    selected_note = None
+    if notes:
+        selected_note = notes[0]
+        for note in notes:
+            if note_id == note['id']:
+                selected_note = note
+                break
+    if selected_note:
+        charts = Chart().get_all(selected_note['id'])
+    else:
+        charts = Chart().get_all()
     for chart in charts:
         chart.pop('query', None)
-    return render_template('charts.html', app_name=config['app']['name'], charts=charts)
+    return render_template('charts.html', app_name=config['app']['name'], charts=charts, notes=notes, selected_note=selected_note)
 
 
 @app.route('/chartbuilder', methods=['GET'], defaults={'chart_id': None})
@@ -43,6 +57,7 @@ def chart_builder(chart_id):
     return render_template('chartbuilder.html',
                            app_name=config['app']['name'],
                            charts=Chart().get_all(),
+                           notes=Note().get_all(),
                            selected_chart_id=chart_id)
 
 

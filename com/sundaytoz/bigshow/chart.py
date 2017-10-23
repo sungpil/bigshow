@@ -17,17 +17,18 @@ class Chart(metaclass=Singleton):
     pass
 
     __db = None
-    __schema = ['id', 'title', 'chart_type', 'query_type', 'type', 'width', 'header', 'options', 'query']
+    __schema = ['id', 'note', 'title', 'chart_type', 'query_type', 'type', 'width', 'header', 'options', 'query']
 
     def add(self, chart):
         Logger.error("add: chart={chart}".format(chart=chart))
         connection = self.__get_db()
         try:
             with connection.cursor() as cursor:
-                sql = "INSERT INTO charts(title, chart_type, query_type, type, width, options, header, query) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
-                cursor.execute(sql, (chart['title'], chart['chart_type'], chart['query_type'], chart['type'], chart['width'], chart['options'], json.dumps(chart['header']), chart['query'],))
+                sql = "INSERT INTO charts(note, title, chart_type, query_type, type, width, options, header, query) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                cursor.execute(sql, (chart['note'], chart['title'], chart['chart_type'], chart['query_type'], chart['type'], chart['width'], chart['options'], json.dumps(chart['header']), chart['query'],))
+                insert_id = connection.insert_id()
             connection.commit()
-            return connection.insert_id()
+            return insert_id
         finally:
             connection.close()
 
@@ -54,12 +55,20 @@ class Chart(metaclass=Singleton):
         else:
             return None
 
-    def get_all(self, chart_ids=None):
-        Logger.info("get_all chart_ids={0}".format(chart_ids))
+    def get_all(self, note_id=None, chart_ids=None):
+        Logger.info("get_all note_id={note_id}, chart_ids={chart_ids}".format(note_id=note_id, chart_ids=chart_ids))
         connection = self.__get_db()
         try:
+            wheres = []
+            sql = "SELECT * FROM charts"
+            if note_id:
+                wheres.append('note={note_id}'.format(note_id=note_id))
+            if chart_ids:
+                wheres.append('ids in ({chart_ids})'.format(chart_ids=','.join(chart_ids)))
+            if wheres:
+                sql += ' WHERE {wheres}'.format(wheres=' and '.join(wheres))
+            Logger.info("get_all sql={sql}".format(sql=sql))
             with connection.cursor() as cursor:
-                sql = "SELECT * FROM charts"
                 cursor.execute(sql)
                 rows = cursor.fetchall()
                 for row in rows:
