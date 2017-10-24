@@ -29,7 +29,7 @@ def before():
 #########################################################################
 
 
-@app.route('/', methods=['GET'])
+@app.route('/', methods=['GET'], defaults={'note_id':None})
 @app.route('/dashboard', methods=['GET'], defaults={'note_id':None})
 @app.route('/dashboard/<int:note_id>', methods=['GET'])
 def chart_view(note_id):
