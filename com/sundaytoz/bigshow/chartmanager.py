@@ -19,6 +19,9 @@ class Singleton(type):
 class ChartManager:
     pass
 
+    TTL_LAST_JOB = 3600
+    TTL_LAST_RESULT = 2592000
+
     @staticmethod
     def query(chart_id, chart_type, query_type, query):
         Logger.debug('chart_id={0}, chart_type={1}, query_type={2}, query={3}'.format(chart_id, chart_type, query_type, query))
@@ -42,7 +45,7 @@ class ChartManager:
             new_job = {'id': ChartManager.get_job_id(chart_id), 'type': chart['chart_type']}
             adapter = ChartManager.get_adapter(chart_type=chart['chart_type'])
             adapter.query_async(job_id=new_job['id'], query=QueryBuilder.get_query(chart['query_type'], chart['query']))
-            Cache().set(last_job_key, new_job)
+            Cache().set(last_job_key, new_job, ChartManager.TTL_LAST_JOB)
             return 'RUNNING', None, None
         else:
             last_job = ast.literal_eval(last_job)
@@ -58,12 +61,12 @@ class ChartManager:
                     new_job = {'id': last_job_id, 'type': chart['chart_type']}
                     adapter = ChartManager.get_adapter(new_job['type'])
                     adapter.query_async(job_id=new_job['id'], query=QueryBuilder.get_query(chart['query_type'], chart['query']))
-                    Cache().set(last_job_key, new_job)
+                    Cache().set(last_job_key, new_job, ChartManager.TTL_LAST_JOB)
                     return 'RUNNING', None, None
                 else:
                     status, results, error = adapter.get_result(last_job_id)
                     if 'DONE' == status:
-                        Cache().set(last_job_id, {'result': results, 'error': error})
+                        Cache().set(last_job_id, {'result': results, 'error': error} , ChartManager.TTL_LAST_RESULT)
                     return status, results, error
 
     @staticmethod
