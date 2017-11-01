@@ -43,7 +43,7 @@ class QueryBuilder:
                 if target_date <= today:
                     if cnt == 0:
                         date_str = target_date.strftime('%y%m%d')
-                        query_list.append("(SELECT count(*) FROM `{0}.{1} WHERE region = {2}`) r{3} ".format(dataset_nru, date_str, region, cnt))
+                        query_list.append("(SELECT count(*) FROM `{0}.{1} WHERE region = '{2}'`) r{3} ".format(dataset_nru, date_str, region, cnt))
                     else:
                         query_list.append(
                             "(SELECT count(*) FROM `{0}.{1}` t1 inner join `{2}.{3}` t2 ON t1.resettable_device_id = t2.resettable_device_id AND t1.region = t2.region AND t1.region = '{4}') r{5}".format(
