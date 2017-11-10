@@ -327,22 +327,26 @@
     function drawGraph(graph, chart) {
       $(graph).empty();
       // draw chart
-      var container, json_data = null;
+      var container, json_data, options = null;
       if('bar' == chart.type) {
         container = new google.charts.Bar(graph);
         json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
+        options = google.charts.Line.convertOptions(chart.options);
       } else if('line' == chart.type) {
         container = new google.charts.Line(graph);
         json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
+        options = google.charts.Line.convertOptions(chart.options);
       } else if('table' == chart.type) {
         chart.options.width = '100%';
         container = new google.visualization.Table(graph);
         json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
+        options = google.charts.Line.convertOptions(chart.options);
       } else if('table_rtt' == chart.type) {
         container = new sundaytoz.chart.RetentionTable(graph);
         json_data = [chart.header].concat(chart.data);
+        options = Object.assign(chart.options, JSON.parse(chart.query));
       }
-      container.draw(json_data, google.charts.Line.convertOptions(chart.options));
+      container.draw(json_data, options);
     }
 
     function makeCard(chart) {
