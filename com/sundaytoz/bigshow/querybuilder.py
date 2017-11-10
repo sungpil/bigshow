@@ -16,7 +16,7 @@ class QueryBuilder:
             date_range = option['range']
             interval = date_range-1
             region = option['region'] if 'region' in option else None
-            platform = QueryBuilder._getPlatform(option['platform'])
+            platform = QueryBuilder._getPlatform(option['platform']) if 'platform' in option else None
             end_date = datetime.datetime.now() - datetime.timedelta(days=1)
             start_date = end_date - datetime.timedelta(days=interval)
             query = QueryBuilder.retention(start_date, end_date, date_range, region, platform)
@@ -76,8 +76,6 @@ class QueryBuilder:
 
     @staticmethod
     def _getPlatform(platform):
-        if platform is None:
-            return None
         if platform.lower() in ['android', 'a', 'aos', 'google']:
             return 'A'
         elif platform.lower() in ['apple', 'i', 'ios']:
@@ -94,7 +92,7 @@ class QueryBuilder:
             table_alias = ''
         if region is not None:
             where_list.append("{table_alias}region='{region}'".format(table_alias=table_alias,region=region))
-        if platform.upper() is not None:
+        if platform is not None:
             where_list.append("{table_alias}platform='{platform}'".format(table_alias=table_alias,platform=platform))
         if len(where_list) > 0:
             return "WHERE {where_list}".format(where_list=' AND '.join(where_list))
