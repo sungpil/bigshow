@@ -17,7 +17,7 @@ class QueryBuilder:
             interval = date_range-1
             region = option['region'] if 'region' in option else None
             platform = QueryBuilder._getPlatform(option['platform']) if 'platform' in option else None
-            end_date = datetime.datetime.now() - datetime.timedelta(days=1)
+            end_date = datetime.datetime.now() - datetime.timedelta(days=2)
             start_date = end_date - datetime.timedelta(days=interval)
             query = QueryBuilder.retention(start_date, end_date, date_range, region, platform)
             Logger().debug(query)
@@ -30,7 +30,7 @@ class QueryBuilder:
         project_id = config['bigquery']['project_id']
         dataset_nru = "{0}.{1}".format(project_id, config['bigquery']['dataset']['nru'])
         dataset_dau = "{0}.{1}".format(project_id, config['bigquery']['dataset']['dau'])
-        today = datetime.datetime.now() - datetime.timedelta(days=1)
+        today = datetime.datetime.now() - datetime.timedelta(days=2)
         if end_date > today:
             end_date = today
         if start_date > end_date:

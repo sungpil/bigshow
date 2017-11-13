@@ -67,7 +67,7 @@ sundaytoz.chart.RetentionTable = class RetentionTable {
 				var dau = row[i];
 				if(dau > 0) {
 					var rtt = dau/nru*100
-					if(rtt_sum_list.length < dau_idx+1) {
+					if(rtt_sum_list.length < dau_idx+1 || !rtt_sum_list[dau_idx]) {
 					    rtt_sum_list[dau_idx] = [];
 					}
 					rtt_sum_list[dau_idx].push(rtt);
