@@ -50,11 +50,11 @@ class QueryBuilder:
                     if cnt == 0:
                         date_str = target_date.strftime('%y%m%d')
                         query_list.append(
-                            "(SELECT count(*) FROM `{dataset_nru}.{date_str}` {where}) r{cnt} ".format(
+                            "(SELECT count(distinct(uid)) FROM `{dataset_nru}.{date_str}` {where}) r{cnt} ".format(
                                 dataset_nru=dataset_nru, date_str=date_str, cnt=cnt, where=where_nru))
                     else:
                         query_list.append(
-                            "(SELECT count(*) FROM `{dataset_nru}.{date_str}` t1 inner join `{dataset_dau}.{dau_date_str}` t2 ON t1.uid = t2.uid AND t1.region = t2.region {where}) r{cnt}".format(
+                            "(SELECT count(distinct(t1.uid)) FROM `{dataset_nru}.{date_str}` t1 inner join `{dataset_dau}.{dau_date_str}` t2 ON t1.uid = t2.uid AND t1.region = t2.region {where}) r{cnt}".format(
                                 dataset_nru=dataset_nru, date_str=date_str, dataset_dau=dataset_dau,
                                 dau_date_str=target_date.strftime('%y%m%d'), cnt=cnt, where=where_dru))
                 else:
