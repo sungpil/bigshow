@@ -29,15 +29,15 @@
       card = makeCard(chart);
       // add card
       row.append(card);
-      if('table' === chart.type) {
-        chart.options.width = '100%';
+      if('table' === chart.graph.type) {
+        chart.graph.options.width = '100%';
       } else {
-        chart.options.width = card.find('#chart').width();
+        chart.graph.options.width = card.find('#chart').width();
       }
-      card.find('.card').height(card.find('.card').height()+chart.options.height);
+      card.find('.card').height(card.find('.card').height()+chart.graph.options.height);
       // select options
-      card.find('select[name=chart-type]').val(chart.type);
-      card.find('select[name=chart-width]').val(chart.width);
+      card.find('select[name=graph-type]').val(chart.graph.type);
+      card.find('select[name=graph-width]').val(chart.graph.width);
       if(chart.data) {
         // draw graph
         drawGraph(card.find('#chart').get(0), chart);
@@ -104,7 +104,7 @@
       card.attr('id',"chart-"+chart.id);
       card.attr('chart-id',chart.id);
       card.find('#title').append(chart.title);
-      card.addClass('col-lg-'+chart.width);
+      card.addClass('col-lg-'+chart.graph.width);
       card.css('display','');
       return card;
     }
@@ -113,21 +113,21 @@
       if(chart.data) {
         $(graph).empty();
         var container, json_data = null;
-        if('bar' == chart.type) {
+        if('bar' == chart.graph.type) {
           container = new google.charts.Bar(graph);
-          json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
-        } else if('line' == chart.type) {
+          json_data = google.visualization.arrayToDataTable([chart.graph.header].concat(chart.data));
+        } else if('line' == chart.graph.type) {
           container = new google.charts.Line(graph);
-          json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
-        } else if('table' == chart.type) {
+          json_data = google.visualization.arrayToDataTable([chart.graph.header].concat(chart.data));
+        } else if('table' == chart.graph.type) {
           chart.options.width = '100%';
           container = new google.visualization.Table(graph);
-          json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
-        } else if('table_rtt' == chart.type) {
+          json_data = google.visualization.arrayToDataTable([chart.graph.header].concat(chart.data));
+        } else if('table_rtt' == chart.graph.type) {
           container = new sundaytoz.chart.RetentionTable(graph);
-          json_data = [chart.header].concat(chart.data);
+          json_data = [chart.graph.header].concat(chart.data);
         }
-        container.draw(json_data, google.charts.Line.convertOptions(chart.options));
+        container.draw(json_data, google.charts.Line.convertOptions(chart.graph.options));
       }
     }
 
@@ -157,7 +157,7 @@
     function editCard(target) {
       var wrapper = $(target).closest('.card-wrapper');
       var chart_id = $(wrapper).attr('chart-id');
-      $(location).attr('href', '/chartbuilder/'+chart_id);
+      $(location).attr('href', '/charts/manager/'+chart_id);
     }
 
     function changeCardType(target) {
@@ -165,17 +165,19 @@
       var chart_id = $(wrapper).attr('chart-id');
       var chart = getChartById(chart_id);
       if(chart) {
-        console.log("changeCardType chart_id="+chart_id+",from="+chart.type+",to="+$(target).val());
-        var type = $(target).val();
+        console.log("changeCardType chart_id="+chart_id+",from="+chart.graph.type+",to="+$(target).val());
+        var newGraph = {};
+        $.extend(newGraph, chart.graph);
+        newGraph.type = $(target).val();
         $.ajax({
           url: "/charts/"+chart_id,
           method: 'PUT',
           contentType: "application/json; charset=utf-8",
           dataType: 'json',
-          data: JSON.stringify({chart:{'id':chart_id,'type':type}}),
+          data: JSON.stringify({chart:{'id':chart_id,'graph':newGraph}}),
           success: function(data) {
             console.log(data);
-            chart.type = type;
+            chart.graph = newGraph;
             drawGraph($(wrapper).find('#chart').get(0), chart);
           }
         });
@@ -187,20 +189,22 @@
       var chart_id = $(wrapper).attr('chart-id');
       var chart = getChartById(chart_id);
       if(chart) {
-        var width = $(target).val();
+        console.log("changeCardWidth chart_id="+chart_id+",from="+chart.graph.width+",to="+$(target).val());
+        var newGraph = {};
+        $.extend(newGraph, chart.graph);
+        newGraph.width = $(target).val();
         $.ajax({
           url: "/charts/"+chart_id,
           method: 'PUT',
           contentType: "application/json; charset=utf-8",
           dataType: 'json',
-          data: JSON.stringify({chart:{'id':chart_id,'width':width}}),
+          data: JSON.stringify({chart:{'id':chart_id,'graph':newGraph}}),
           success: function(data) {
             console.log(data);
-            $(wrapper).removeClass('col-lg-'+chart.width).addClass('col-lg-'+width);
-            console.log("changeCardWidth chart_id="+chart_id+",from="+chart.width+",to="+width);
-            chart.width = width;
-            if('table' != chart.type) {
-              chart.options.width = $(wrapper).find('#chart').width();
+            $(wrapper).removeClass('col-lg-'+chart.graph.width).addClass('col-lg-'+newGraph.width);
+            chart.graph = newGraph;
+            if('table' != chart.graph.type) {
+              chart.graph.options.width = $(wrapper).find('#chart').width();
             }
             drawGraph($(wrapper).find('#chart').get(0), chart);
           }
@@ -263,7 +267,7 @@
               <a class="dropdown-item" href="javascript:;" onclick="deleteCard(this);">Delete</a>
             </div>
           </div>
-          <select name="chart-width" onchange="changeCardWidth(this);">
+          <select name="graph-width" onchange="changeCardWidth(this);">
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -277,7 +281,7 @@
             <option value="11">11</option>
             <option value="12">12</option>
           </select>
-          <select name="chart-type" onchange="changeCardType(this);">
+          <select name="graph-type" onchange="changeCardType(this);">
             <option value="line">line</option>
             <option value="bar">bar</option>
             <option value="table">table</option>

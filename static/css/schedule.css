@@ -1,0 +1,28 @@
+.page-header {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.flex-justify {
+    display: flex;
+    justify-content: space-between;
+}
+
+form > div:first-child {
+    margin-top: 0px;
+}
+
+form > div {
+    margin-top: 10px;
+}
+
+.btn {
+    font-size: 12px;
+}
+.google-visualization-table-table {
+    width: 100%;
+}
+
+.form-group > select {
+    margin-right: 10px;
+}

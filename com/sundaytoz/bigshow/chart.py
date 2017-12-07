@@ -1,127 +1,103 @@
+import ast
+import time
+
+from com.sundaytoz.bigshow import models
+from com.sundaytoz.bigshow.resources import Resource
+from com.sundaytoz.cache import Cache
 from com.sundaytoz.logger import Logger
-import pymysql.cursors
-from pymysql.converters import conversions, through, FIELD_TYPE
-import json
 
 
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
-class Chart(metaclass=Singleton):
+class Chart:
     pass
 
-    __db = None
-    __schema = ['id', 'note', 'title', 'chart_type', 'query_type', 'type', 'width', 'header', 'options', 'query']
+    TTL_LAST_JOB = 3600
+    TTL_LAST_RESULT = 2592000
 
-    def add(self, chart):
-        Logger.error("add: chart={chart}".format(chart=chart))
-        connection = self.__get_db()
-        try:
-            with connection.cursor() as cursor:
-                sql = "INSERT INTO charts(note, title, chart_type, query_type, type, width, options, header, query) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                cursor.execute(sql, (chart['note'], chart['title'], chart['chart_type'], chart['query_type'], chart['type'], chart['width'], chart['options'], json.dumps(chart['header']), chart['query'],))
-                insert_id = connection.insert_id()
-            connection.commit()
-            return insert_id
-        finally:
-            connection.close()
+    __data_adapters = {}
 
-    def get(self, chart_id, columns=None):
-        Logger.info("get: chart_id={chart_id},columns={columns}".format(chart_id=chart_id, columns=columns))
-        if not columns:
-            columns = ['*']
-        if not isinstance(columns, list):
-            columns = [columns]
-        connection = self.__get_db()
-        try:
-            with connection.cursor() as cursor:
-                sql = "SELECT {0} FROM charts WHERE id=%s".format(','.join(columns))
-                cursor.execute(sql, (chart_id,))
-                return cursor.fetchone()
-        finally:
-            connection.close()
-
-    def get_query(self, chart_id):
-        Logger.info("get: chart_id={chart_id}".format(chart_id=chart_id))
-        row = self.get(chart_id, ['query'])
-        if row:
-            return row['query']
-        else:
+    @staticmethod
+    def query(chart_id, resource, query_type, query, query_params):
+        Logger.debug('chart_id={0}, resource={1}, query_type={2}, query={3}, query_params={4}'
+                     .format(chart_id, resource, query_type, query, query_params))
+        adapter = Resource.get(resource_id=resource)
+        if not adapter:
             return None
+        else:
+            job_id = Chart.get_job_id(chart_id)
+            adapter.query(job_id=job_id, query_type=query_type, query=query, query_params=query_params)
+            return job_id
 
-    def get_all(self, note_id=None, chart_ids=None):
-        Logger.info("get_all note_id={note_id}, chart_ids={chart_ids}".format(note_id=note_id, chart_ids=chart_ids))
-        connection = self.__get_db()
-        try:
-            wheres = []
-            sql = "SELECT * FROM charts"
-            if note_id:
-                wheres.append('note={note_id}'.format(note_id=note_id))
-            if chart_ids:
-                wheres.append('ids in ({chart_ids})'.format(chart_ids=','.join(chart_ids)))
-            if wheres:
-                sql += ' WHERE {wheres}'.format(wheres=' and '.join(wheres))
-            Logger.info("get_all sql={sql}".format(sql=sql))
-            with connection.cursor() as cursor:
-                cursor.execute(sql)
-                rows = cursor.fetchall()
-                for row in rows:
-                    if row['header']:
-                        row['header'] = json.loads(row['header'])
-                    if row['options']:
-                        row['options'] = json.loads(row['options'])
-                return rows
-        finally:
-            connection.close()
-
-    def delete(self, chart_id):
-        Logger.info("delete: chart_id={chart_id}".format(chart_id=chart_id))
-        connection = self.__get_db()
-        try:
-            with connection.cursor() as cursor:
-                sql = "DELETE FROM charts WHERE id=%s"
-                cursor.execute(sql, (chart_id,))
-            connection.commit()
-            return True
-        finally:
-            connection.close()
-
-    def update(self, chart_id, chart):
-        schema = set(self.__schema) - {'id'}
-        targets = list(schema & chart.keys())
-        columns = ','.join(map(lambda x: "{x}=%s".format(x=x), targets))
-        values = []
-        for key in targets:
-            if isinstance(chart[key], (list, dict)):
-                values.append("{x}".format(x=json.dumps(chart[key])))
+    @staticmethod
+    def query_sync(chart_id, resource, query_type, query, query_params):
+        job_id = Chart.query(chart_id=chart_id, resource=resource,
+                             query_type=query_type, query=query, query_params=query_params)
+        if not job_id:
+            return None, {'message': 'fail to initialize job'}
+        adapter = Resource.get(resource_id=resource)
+        if not adapter:
+            return None, {'message': 'fail to initialize resources'}
+        retry_count = 100
+        while retry_count > 0:
+            status, results, error = adapter.get_result(job_id)
+            if 'DONE' == status:
+                return results, error
             else:
-                values.append(chart[key])
-        sql = "UPDATE charts SET {columns} WHERE id={chart_id}".format(columns=columns, chart_id=chart_id)
-        Logger.debug("columns={columns},sql={sql},values={values}".format(columns=columns, sql=sql, values=values))
-        connection = self.__get_db()
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(sql, tuple(values))
-            connection.commit()
-            return True
-        finally:
-            connection.close()
+                time.sleep(10)
 
-    def __get_db(self):
-        if not self.__db:
-            conversions[FIELD_TYPE.TIMESTAMP] = through
-            from config.dev import config
-            db_config = config['db']['default']
-            return pymysql.connect(host=db_config["host"],
-                                   user=db_config["user"],
-                                   password=db_config["password"],
-                                   db=db_config["db"],
-                                   charset=db_config["charset"],
-                                   cursorclass=pymysql.cursors.DictCursor)
-        return self.__db
+    @staticmethod
+    def get_result(chart_id, from_cache=True):
+        Logger().debug("get_result: chart_id={chart_id}, from_cache={from_cache}"
+                       .format(chart_id=chart_id, from_cache=from_cache))
+        last_job_key = Chart.get_job_key(chart_id=chart_id)
+        if from_cache is True:
+            last_job = Cache().get(last_job_key)
+        else:
+            last_job = None
+        if not last_job:
+            chart = models.Chart.get(chart_id, ['resource,query_type,query,query_params'])
+            new_job = {'id': Chart.get_job_id(chart_id), 'resource': chart['resource']}
+            adapter = Resource.get(resource_id=chart['resource'])
+            adapter.query(job_id=new_job['id'], query_type=chart['query_type'],
+                          query=chart['query'], query_params=chart['query_params'])
+            Cache().set(last_job_key, new_job, Chart.TTL_LAST_JOB)
+            return 'RUNNING', None, None
+        else:
+            last_job = ast.literal_eval(last_job)
+            last_job_id = last_job['id']
+            last_job_result = Cache().get(last_job_id)
+            if last_job_result:
+                last_job_result = ast.literal_eval(last_job_result)
+                return 'DONE', last_job_result['result'], last_job_result['error']
+            else:
+                adapter = Resource.get(resource_id=last_job['resource'])
+                if not adapter.exists(job_id=last_job_id):
+                    chart = models.Chart.get(chart_id, ['resource,query_type,query,query_params'])
+                    adapter.query_async(job_id=last_job['id'], query_type=chart['query_type'],
+                                        query=chart['query'], query_params=chart['query_params'])
+                    Cache().set(last_job_key, last_job, Chart.TTL_LAST_JOB)
+                    return 'RUNNING', None, None
+                else:
+                    status, results, error = adapter.get_result(last_job_id)
+                    if 'DONE' == status:
+                        Cache().set(last_job_id, {'result': results, 'error': error}, Chart.TTL_LAST_RESULT)
+                    return status, results, error
+
+    @staticmethod
+    def del_cache(chart_id):
+        Cache().delete(Chart.get_job_key(chart_id=chart_id))
+
+    @staticmethod
+    def get_cached_result(last_job_key):
+        last_job_id = Cache().get(last_job_key)
+        if last_job_id:
+            return last_job_id, Cache().get(last_job_id)
+        else:
+            return None, None
+
+    @staticmethod
+    def get_job_id(chart_id):
+        return "chart-{chart_id}-{time}".format(chart_id=chart_id, time=int(time.time()))
+
+    @staticmethod
+    def get_job_key(chart_id):
+        return "last_job:{chart_id}".format(chart_id=chart_id)

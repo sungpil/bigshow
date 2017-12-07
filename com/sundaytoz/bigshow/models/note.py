@@ -4,23 +4,14 @@ from pymysql.converters import conversions, through
 from pymysql.constants import FIELD_TYPE
 
 
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
-class Note(metaclass=Singleton):
-    pass
+class Note:
 
     __db = None
 
-    def get_all(self, note_ids=None):
-        Logger.info("get_all")
-        connection = self.__get_db()
+    @classmethod
+    def get_all(cls, note_ids=None):
+        Logger.info("get_all, node_ids={note_ids}".format(note_ids=note_ids))
+        connection = cls.__get_db()
         try:
             with connection.cursor() as cursor:
                 sql = "SELECT * FROM notes"
@@ -29,9 +20,10 @@ class Note(metaclass=Singleton):
         finally:
             connection.close()
 
-    def get(self, note_id):
+    @classmethod
+    def get(cls, note_id):
         Logger.info("get: note_id={note_id}".format(note_id=note_id))
-        connection = self.__get_db()
+        connection = cls.__get_db()
         try:
             with connection.cursor() as cursor:
                 sql = "SELECT * FROM notes WHERE id=%s"
@@ -40,9 +32,10 @@ class Note(metaclass=Singleton):
         finally:
             connection.close()
 
-    def add(self, title):
+    @classmethod
+    def add(cls, title):
         Logger.error("add: title={title}".format(title=title))
-        connection = self.__get_db()
+        connection = cls.__get_db()
         try:
             with connection.cursor() as cursor:
                 sql = "INSERT INTO notes(title, created) VALUES(%s, now())"
@@ -53,8 +46,9 @@ class Note(metaclass=Singleton):
         finally:
             connection.close()
 
-    def __get_db(self):
-        if not self.__db:
+    @classmethod
+    def __get_db(cls):
+        if not cls.__db:
             conversions[FIELD_TYPE.TIMESTAMP] = through
             from config.dev import config
             db_config = config['db']['default']
@@ -65,4 +59,4 @@ class Note(metaclass=Singleton):
                                    charset=db_config["charset"],
                                    cursorclass=pymysql.cursors.DictCursor,
                                    conv=conversions)
-        return self.__db
+        return cls.__db

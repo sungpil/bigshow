@@ -1,0 +1,375 @@
+{% extends "layout.html" %}
+{% block body %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/schedule.css') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='css/googlechart.css') }}">
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<div class='row page-header'>
+    <div class="col-lg-12">
+        <h3>Schedules</h3>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-3">
+        <table class="table table-bordered table-striped table-sm table-hover">
+            <thead>
+                <tr><th>id</th><th>title</th><th>resource</th><th>created</th></tr>
+            </thead>
+            <tbody id="tbody-schedules">
+            {% for schedule in schedules %}
+            <tr data-id="{{ schedule['id'] }}"><td>{{ schedule['id'] }}</td><td>{{ schedule['title'] }}</td><td>{{ schedule['resource'] }}</td><td>{{ schedule['created'] }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-body">
+                <form id="chart-data">
+                    <div class="form-row align-items-center">
+                        <input type="hidden" name="id" id="schedule-id">
+                        <label class="col-sm-1 col-form-label">Title</label>
+                        <div class="col-sm-11">
+                            <input type="text" class="form-control" placeholder="Title" name="title">
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">Data</label>
+                        <div class="col-sm-11">
+                            <select class="form-control" name="resource">
+                                <option selected value="0">Bigquery</option>
+                                <option value="1">Livy</option>
+                                <option value="2">DB</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">Time</label>
+                         <div class="col-sm-11 form-inline">
+                             <div class="form-group">
+                                <select class="form-control" name="time_minute">
+                                    <option selected value="-1">분</option>
+                                    {% for m in range(0,60) %}
+                                    <option value="{{m}}">{{m}}</option>
+                                    {% endfor %}
+                                </select>
+                                 <select class="form-control" name="time_hour">
+                                    <option selected value="-1">시간</option>
+                                    {% for h in range(0,24) %}
+                                    <option value="{{h}}">{{h}}</option>
+                                    {% endfor %}
+                                </select>
+                                 <select class="form-control" name="time_day">
+                                    <option selected value="-1">일</option>
+                                    {% for d in range(1,32) %}
+                                    <option value="{{d}}">{{d}}</option>
+                                    {% endfor %}
+                                </select>
+                                 <select class="form-control" name="time_month">
+                                    <option selected value="-1">월</option>
+                                    {% for m in range(1,13) %}
+                                    <option value="{{m}}">{{m}}월</option>
+                                    {% endfor %}
+                                </select>
+                                 <select class="form-control" name="time_date">
+                                    <option value="-1">요일</option>
+                                    <option value="0">월요일</option>
+                                    <option value="1">화요일</option>
+                                    <option value="2">수요일</option>
+                                    <option value="3">목요일</option>
+                                    <option value="4">금요일</option>
+                                    <option value="5">토요일</option>
+                                    <option value="6">일요일</option>
+                                </select>
+                             </div>
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">Query      Type</label>
+                        <div class="col-sm-11">
+                            <select class="form-control" name="query_type">
+                                <option selected value="0">normal</option>
+                                <option value="1">custom</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">Query      Params</label>
+                        <div class="col-sm-11">
+                            <input type="text" class="form-control" placeholder="Query-Params" name="query_params">
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">Header</label>
+                        <div class="col-sm-11">
+                            <input type="text" class="form-control" placeholder="Header" name="headers">
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">query</label>
+                        <div class="col-sm-11">
+                            <textarea class="form-control" rows="20" name="query"></textarea>
+                        </div>
+                    </div>
+                    <div class="text-right chart-button-group">
+                        <button type="button" class="btn btn-danger" id="btn_delete">DELETE</button>
+                        <button type="button" class="btn btn-danger" id="btn_update">UPDATE</button>
+                        <button type="button" class="btn btn-info" id="btn_run">RUN</button>
+                        <button type="button" class="btn btn-primary" id="btn_add">ADD</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4" id="result">
+    </div>
+</div>
+{% autoescape false %}
+<script>
+    google.charts.load('current', {'packages':['line','bar','table']});
+
+    var schedules;
+
+    $( document ).ready(function() {
+      addListeners();
+    });
+
+    function addListeners() {
+        $('#tbody-schedules > tr').click(function(event) {
+            var id = $(event.currentTarget).attr('data-id');
+            $.ajax({
+                url: "/schedules/"+id,
+                method: 'GET',
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                success: function(data) {
+                    console.log("add success");
+                    updateSchedule(data);
+                    enable($('#btn_update'));
+                    enable($('#btn_run'));
+                    enable($('#btn_add'));
+                },
+                error: function(error) {
+                    console.log("add error:"+error);
+                    alert(JSON.stringify(error));
+                    enable($('#btn_update'));
+                    enable($('#btn_run'));
+                    enable($('#btn_add'));
+                }
+            });
+        });
+    }
+
+    function disable(object) {
+        object.prop("disabled",true);
+    }
+
+    function enable(object) {
+        object.prop("disabled",false);
+    }
+
+    function getScheduleData() {
+        var chart = objectifyForm($('#chart-data').serializeArray());
+        chart.query_type = 0;
+        var graph = {'type':'table', 'width':12, 'header':chart.headers.split(','), 'options':{'width':'100%'}};
+        chart.graph = graph;
+        return chart;
+    }
+
+    function objectifyForm(formArray) {
+      var returnArray = {};
+      for (var i = 0; i < formArray.length; i++){
+        returnArray[formArray[i]['name']] = formArray[i]['value'];
+      }
+      return returnArray;
+    }
+
+    function drawTable(schedule) {
+        schedule.graph.options.width = '100%';
+        var container = new google.visualization.Table($('#result').get(0));
+        json_data = google.visualization.arrayToDataTable([schedule.graph.header].concat(schedule.data));
+        container.draw(json_data);
+    }
+
+    function drawError(error) {
+        $('#result').empty();
+        if(error) {
+            $('#result').append(JSON.stringify(error));
+        }
+    }
+
+    $('#btn_update').on('click', function(e) {
+        console.log("update");
+        var schedule = getScheduleData();
+        $.ajax({
+            url: "/schedules",
+            method: 'PUT',
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            data: JSON.stringify(schedule),
+            success: function(data) {
+                console.log("add success");
+                updateSchedules();
+                enable($('#btn_update'));
+                enable($('#btn_run'));
+                enable($('#btn_add'));
+            },
+            error: function(error) {
+                console.log("add error:"+error);
+                alert(JSON.stringify(error));
+                enable($('#btn_update'));
+                enable($('#btn_run'));
+                enable($('#btn_add'));
+            }
+        });
+    });
+
+    $('#btn_delete').on('click', function(e) {
+        var schedule_id = $('#chart-data').find('#schedule-id').val();
+        console.log("add");
+        var schedule = getScheduleData();
+        $.ajax({
+            url: "/schedules/"+schedule_id,
+            method: 'DELETE',
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            success: function(data) {
+                console.log("add success");
+                updateSchedules();
+                enable($('#btn_update'));
+                enable($('#btn_run'));
+                enable($('#btn_add'));
+            },
+            error: function(error) {
+                console.log("add error:"+error);
+                alert(JSON.stringify(error));
+                enable($('#btn_update'));
+                enable($('#btn_run'));
+                enable($('#btn_add'));
+            }
+        });
+    });
+
+    $('#btn_run').on('click', function(e) {
+        console.log("run");
+        $('#result').empty();
+        disable($('#btn_update'));
+        disable($('#btn_run'));
+        disable($('#btn_add'));
+        var schedule = getScheduleData();
+        console.log("run schedule="+schedule);
+        $.ajax({
+            url: "/charts/queries",
+            method: 'POST',
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            data: JSON.stringify({
+                query:schedule.query,
+                resource:schedule.resource,
+                query_type:schedule.query_type,
+                query_params:schedule.query_params,
+                chart_id:'tmp'}),
+            success: function(data) {
+                console.log("success data="+data);
+                if(!data.error) {
+                    schedule['data'] = data.results;
+                    drawTable(schedule);
+                } else {
+                    drawError(data.error);
+                }
+                enable($('#btn_update'));
+                enable($('#btn_run'));
+                enable($('#btn_add'));
+            },
+            error: function(error) {
+                console.log("error data="+error);
+                drawError(error);
+                enable($('#btn_update'));
+                enable($('#btn_run'));
+                enable($('#btn_add'));
+            }
+        });
+    });
+
+    $('#btn_add').on('click', function(e) {
+        console.log("add");
+        var schedule = getScheduleData();
+        $.ajax({
+            url: "/schedules",
+            method: 'POST',
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            data: JSON.stringify(schedule),
+            success: function(data) {
+                console.log("add success");
+                updateSchedules();
+                enable($('#btn_update'));
+                enable($('#btn_run'));
+                enable($('#btn_add'));
+            },
+            error: function(error) {
+                console.log("add error:"+error);
+                alert(JSON.stringify(error));
+                enable($('#btn_update'));
+                enable($('#btn_run'));
+                enable($('#btn_add'));
+            }
+        });
+    });
+
+    function updateSchedule(schedule) {
+        $('#chart-data').find('#schedule-id').val(schedule['id']);
+        Object.keys(schedule).forEach(function(prop){
+            var target = $("#chart-data").find('[name="'+prop+'"]');
+            if(target) {
+                if(target.is('textarea')) {
+                    target.text(schedule[prop]);
+                } else {
+                    target.val(schedule[prop]);
+                }
+            }
+        });
+    }
+
+    function updateSchedules() {
+        console.log("update schedules");
+        $.ajax({
+            url: "/schedules",
+            method: 'GET',
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            success: function(data) {
+                console.log("schedules success");
+                if(!data.error) {
+                    var schedule_list = $('#tbody-schedules');
+                    schedule_list.empty();
+                    data.forEach(function(schedule) {
+                        schedule_list.append(getScheduleRow(schedule));
+                    });
+                } else {
+                    drawError(data.error);
+                }
+                enable($('#btn_update'));
+                enable($('#btn_run'));
+                enable($('#btn_add'));
+                addListeners();
+            },
+            error: function(error) {
+                console.log("schedules error data="+error);
+                alert(JSON.stringify(error));
+                enable($('#btn_update'));
+                enable($('#btn_run'));
+                enable($('#btn_add'));
+            }
+        });
+    }
+
+    function getScheduleRow(schedule) {
+        var row = "<tr data-id='$id$'><td>$id$</td><td>$title$</td><td>$resource$</td><td>$created$</td></tr>";
+        return row.replace(/\$id\$/gi, schedule['id'])
+                    .replace(/\$title\$/gi, schedule['title'])
+                    .replace(/\$resource\$/gi, schedule['resource'])
+                    .replace(/\$created\$/gi, schedule['created']);
+    }
+</script>
+{% endautoescape %}
+{% endblock %}

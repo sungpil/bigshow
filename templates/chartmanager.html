@@ -38,7 +38,7 @@
                     <div class="form-row align-items-center">
                         <label class="col-sm-1 col-form-label">Data</label>
                         <div class="col-sm-11">
-                            <select class="form-control" name="chart_type">
+                            <select class="form-control" name="resource">
                                 <option selected value="0">Bigquery</option>
                                 <option value="1">Livy</option>
                                 <option value="2">DB</option>
@@ -48,7 +48,7 @@
                     <div class="form-row align-items-center">
                         <label class="col-sm-1 col-form-label">Graph</label>
                         <div class="col-sm-11">
-                            <select class="form-control" name="type">
+                            <select class="form-control" name="graph_type">
                                 <option selected value="line">line</option>
                                 <option value="bar">bar</option>
                                 <option value="table">table</option>
@@ -59,19 +59,19 @@
                     <div class="form-row align-items-center">
                         <label class="col-sm-1 col-form-label">Header</label>
                         <div class="col-sm-11">
-                            <input type="text" class="form-control" placeholder="Header" name="header">
+                            <input type="text" class="form-control" placeholder="Header" name="graph_header">
                         </div>
                     </div>
                     <div class="form-row align-items-center">
                         <label class="col-sm-1 col-form-label">Option</label>
                         <div class="col-sm-11">
-                            <input type="text" class="form-control" placeholder="Options" name="options">
+                            <input type="text" class="form-control" placeholder="Options" name="graph_options">
                         </div>
                     </div>
                     <div class="form-row align-items-center">
                         <label class="col-sm-1 col-form-label">Width</label>
                         <div class="col-sm-11">
-                            <select class="form-control" name="width">
+                            <select class="form-control" name="graph_width">
                                 <option value="1">1</option>
                                 <option value="2">2</option>
                                 <option selected value="3">3</option>
@@ -97,6 +97,12 @@
                         </div>
                     </div>
                     <div class="form-row align-items-center">
+                        <label class="col-sm-1 col-form-label">Query      Params</label>
+                        <div class="col-sm-11">
+                            <input type="text" class="form-control" placeholder="Query-Params" name="query_params">
+                        </div>
+                    </div>
+                    <div class="form-row align-items-center">
                         <label class="col-sm-1 col-form-label">query</label>
                         <div class="col-sm-11">
                             <textarea class="form-control" rows="20" name="query"></textarea>
@@ -118,7 +124,7 @@
   <div class="card">
     <div class="card-body">
       <h6 id="title" class="card-title">
-          <select name="chart-width" onchange="changeCardWidth(this);">
+          <select name="graph-width" onchange="changeGraphWidth(this);">
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -132,7 +138,7 @@
             <option value="11">11</option>
             <option value="12">12</option>
           </select>
-          <select name="chart-type" onchange="changeCardType(this);">
+          <select name="graph-type" onchange="changeGraphType(this);">
             <option value="line">line</option>
             <option value="bar">bar</option>
             <option value="table">table</option>
@@ -172,11 +178,22 @@
 
     function setChartData(chart) {
         traverseObject($('#chart-data').find('input,textarea,select'), function(object) {
-            if(chart.hasOwnProperty(object.name)) {
-                if('options' === object.name) {
-                    $(object).val(JSON.stringify(chart[object.name]));
+            var val = null;
+            if(object.name.includes("graph")) {
+                var tokens = object.name.split("_");
+                if(chart.graph.hasOwnProperty(tokens[1])) {
+                    val = chart.graph[tokens[1]];
+                }
+            } else {
+                if(chart.hasOwnProperty(object.name)) {
+                    val = chart[object.name];
+                }
+            }
+            if(val) {
+                if('graph_options' === object.name) {
+                    $(object).val(JSON.stringify(val));
                 } else {
-                    $(object).val(chart[object.name]);
+                    $(object).val(val);
                 }
             }
         });
@@ -206,12 +223,18 @@
         object.prop("disabled",false);
     }
 
+    function getChartData() {
+        var chart = objectifyForm($('#chart-data').serializeArray());
+        var graph = {'type':chart.graph_type, 'width':chart.graph_width, 'header':chart.graph_header.split(','), 'options':JSON.parse(chart.graph_options)};
+        chart.graph = graph;
+        chart.note = $('#select-note').val();
+        return chart;
+    }
+
     function addChartListener() {
       $('#btn_add').on('click', function(e) {
           disable($('#btn_add'));
-          var chart = objectifyForm($('#chart-data').serializeArray());
-          chart.header = chart.header.split(',');
-          chart.note = $('#select-note').val();
+          var chart = getChartData();
           console.log("add chart="+chart);
           $.ajax({
               url: "/charts",
@@ -230,9 +253,7 @@
     $('#btn_update').on('click', function(e) {
         disable($('#btn_update'));
         disable($('#btn_run'));
-        var chart = objectifyForm($('#chart-data').serializeArray());
-        chart.header = chart.header.split(',');
-        chart.options = JSON.parse(chart.options);
+        var chart = getChartData();
         console.log("update chart="+chart);
         $.ajax({
             url: "/charts/"+chart.id,
@@ -252,9 +273,7 @@
         $('#result').empty();
         disable($('#btn_update'));
         disable($('#btn_run'));
-        var chart = objectifyForm($('#chart-data').serializeArray());
-        chart.header = chart.header.split(',');
-        chart.options = JSON.parse(chart.options);
+        var chart = getChartData();
         var card = addCard(chart, $('#result'));
         selected_chart = chart;
         console.log("run chart="+chart);
@@ -264,13 +283,18 @@
             method: 'POST',
             contentType: "application/json; charset=utf-8",
             dataType: 'json',
-            data: JSON.stringify({query:chart.query,chart_type:chart.chart_type,query_type:chart.query_type,chart_id:'tmp'}),
+            data: JSON.stringify({
+                query:chart.query,
+                resource:chart.resource,
+                query_type:chart.query_type,
+                query_params:chart.query_params,
+                chart_id:'tmp'}),
             success: function(data) {
                 console.log("success data="+data);
                 card.find('#img-loading').hide();
                 if(!data.error) {
                     chart['data'] = data.results;
-                    chart.options.width = card.find('#chart').width();
+                    chart.graph.options.width = card.find('#chart').width();
                     drawGraph(card.find('#chart').get(0), chart);
                     card.find('#btn_add').show();
                     addChartListener();
@@ -305,15 +329,15 @@
       // make card
       var card = makeCard(chart);
       row.append(card);
-      if('table' === chart.type) {
-        chart.options.width = '100%';
+      if('table' === chart.graph.type) {
+        chart.graph.options.width = '100%';
       } else {
-        chart.options.width = card.find('#chart').width();
+        chart.graph.options.width = card.find('#chart').width();
       }
-      card.find('.card').height(card.find('.card').height()+chart.options.height+32);
+      //card.find('.card').height(card.find('.card').height()+chart.graph.options.height+32+33);
       // select options
-      card.find('select[name=chart-type]').val(chart.type);
-      card.find('select[name=chart-width]').val(chart.width);
+      card.find('select[name=graph-type]').val(chart.graph.type);
+      card.find('select[name=graph-width]').val(chart.graph.width);
       return card;
     }
 
@@ -328,23 +352,23 @@
       $(graph).empty();
       // draw chart
       var container, json_data, options = null;
-      if('bar' == chart.type) {
+      if('bar' == chart.graph.type) {
         container = new google.charts.Bar(graph);
-        json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
-        options = google.charts.Line.convertOptions(chart.options);
-      } else if('line' == chart.type) {
+        json_data = google.visualization.arrayToDataTable([chart.graph.header].concat(chart.data));
+        options = google.charts.Line.convertOptions(chart.graph.options);
+      } else if('line' == chart.graph.type) {
         container = new google.charts.Line(graph);
-        json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
-        options = google.charts.Line.convertOptions(chart.options);
-      } else if('table' == chart.type) {
-        chart.options.width = '100%';
+        json_data = google.visualization.arrayToDataTable([chart.graph.header].concat(chart.data));
+        options = google.charts.Line.convertOptions(chart.graph.options);
+      } else if('table' == chart.graph.type) {
+        chart.graph.options.width = '100%';
         container = new google.visualization.Table(graph);
-        json_data = google.visualization.arrayToDataTable([chart.header].concat(chart.data));
-        options = google.charts.Line.convertOptions(chart.options);
-      } else if('table_rtt' == chart.type) {
+        json_data = google.visualization.arrayToDataTable([chart.graph.header].concat(chart.data));
+        options = google.charts.Line.convertOptions(chart.graph.options);
+      } else if('table_rtt' == chart.graph.type) {
         container = new sundaytoz.chart.RetentionTable(graph);
-        json_data = [chart.header].concat(chart.data);
-        options = Object.assign(chart.options, JSON.parse(chart.query));
+        json_data = [chart.graph.header].concat(chart.data);
+        options = Object.assign(chart.graph.options, JSON.parse(chart.query));
       }
       container.draw(json_data, options);
     }
@@ -354,27 +378,27 @@
       card.attr('id',"chart-"+chart.id);
       card.attr('chart-id',chart.id);
       card.find('#title').append(chart.title);
-      card.addClass('col-lg-'+chart.width);
+      card.addClass('col-lg-'+chart.graph.width);
       card.css('display','');
       return card;
     }
 
-    function changeCardType(target) {
+    function changeGraphType(target) {
       var wrapper = $(target).closest('.card-wrapper');
       if(selected_chart) {
-        selected_chart.type = $(target).val();
+        selected_chart.graph.type = $(target).val();
         drawGraph($(wrapper).find('#chart').get(0), selected_chart);
       }
     }
 
-    function changeCardWidth(target) {
+    function changeGraphWidth(target) {
       var wrapper = $(target).closest('.card-wrapper');
       if(selected_chart) {
         var width = $(target).val();
-        $(wrapper).removeClass('col-lg-'+selected_chart.width).addClass('col-lg-'+width);
-        selected_chart.width = width;
-        if('table' != selected_chart.type) {
-          selected_chart.options.width = $(wrapper).find('#chart').width();
+        $(wrapper).removeClass('col-lg-'+selected_chart.graph.width).addClass('col-lg-'+width);
+        selected_chart.graph.width = width;
+        if('table' != selected_chart.graph.type) {
+          selected_chart.graph.options.width = $(wrapper).find('#chart').width();
         }
         drawGraph($(wrapper).find('#chart').get(0), selected_chart);
       }
