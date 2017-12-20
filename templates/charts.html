@@ -120,7 +120,7 @@
           container = new google.charts.Line(graph);
           json_data = google.visualization.arrayToDataTable([chart.graph.header].concat(chart.data));
         } else if('table' == chart.graph.type) {
-          chart.options.width = '100%';
+          chart.graph.options.width = '100%';
           container = new google.visualization.Table(graph);
           json_data = google.visualization.arrayToDataTable([chart.graph.header].concat(chart.data));
         } else if('table_rtt' == chart.graph.type) {
@@ -239,7 +239,7 @@
             if(chart['data']) {
               var card = $('.card-wrapper[chart-id="'+chart['id']+'"]');
               if(card) {
-                chart.options.width = card.find('#chart').width();
+                chart.graph.options.width = card.find('#chart').width();
                 drawGraph(card.find('#chart').get(0), chart);
               }
             }
