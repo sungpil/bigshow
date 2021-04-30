@@ -61,7 +61,7 @@ pymemcache==1.4.3
 PyMySQL==0.7.11
 pyspark==2.1.0+hadoop2.7
 requests==2.18.4
-rsa==3.4.2
+rsa==4.7
 six==1.11.0
 tenacity==4.4.0
 uritemplate==3.0.0
